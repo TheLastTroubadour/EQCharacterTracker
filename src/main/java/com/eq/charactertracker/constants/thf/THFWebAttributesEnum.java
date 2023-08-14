@@ -1,4 +1,4 @@
-package com.eq.charactertracker.constants;
+package com.eq.charactertracker.constants.thf;
 
 import lombok.Getter;
 

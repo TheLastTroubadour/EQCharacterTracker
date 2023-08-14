@@ -3,7 +3,10 @@ package com.eq.charactertracker.entity;
 import com.eq.charactertracker.constants.CharacterClass;
 import com.eq.charactertracker.constants.ServerEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -18,7 +21,10 @@ import javax.persistence.UniqueConstraint;
 
 @Entity
 @Table(name = "characters", uniqueConstraints = @UniqueConstraint(columnNames = {"name", "server"}))
-@Data
+@Setter
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class CharacterEntity {
 
     @Id

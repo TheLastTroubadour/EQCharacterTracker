@@ -6,12 +6,12 @@ import com.eq.charactertracker.constants.Tier5XegonyKeyQuestItemsEnum;
 import com.eq.charactertracker.entity.CharacterEntity;
 import com.eq.charactertracker.entity.CharacterInventoryEntity;
 import com.eq.charactertracker.entity.ItemEntity;
-import com.eq.charactertracker.entity.quest.QuestItemEntity;
-import com.eq.charactertracker.entity.quest.Tier5PoAAugmentQuestEntity;
-import com.eq.charactertracker.entity.quest.Tier5XegonyKeyQuestEntity;
+import com.eq.charactertracker.entity.quest.thf.QuestItemEntity;
+import com.eq.charactertracker.entity.quest.thf.Tier5PoAAugmentQuestEntity;
+import com.eq.charactertracker.entity.quest.thf.Tier5XegonyKeyQuestEntity;
 import com.eq.charactertracker.model.Character;
-import com.eq.charactertracker.model.Tier5PoAAugmentQuest;
-import com.eq.charactertracker.model.Tier5XegonyKeyQuest;
+import com.eq.charactertracker.model.quest.thf.Tier5PoAAugmentQuest;
+import com.eq.charactertracker.model.quest.thf.Tier5XegonyKeyQuest;
 import com.eq.charactertracker.repo.CharacterInventoryRepo;
 import com.eq.charactertracker.repo.CharacterRepo;
 import com.eq.charactertracker.repo.QuestItemRepo;
@@ -58,10 +58,10 @@ public class Tier5QuestService {
     //TODO make an object that returns a list of all quests
     public List<Tier5XegonyKeyQuest> updateTier5Quests(){
         List<Character> characterList = characterService.getAllCharacters();
-        //thfItemService.updateInventoryInformation(characterList);
+        thfItemService.updateInventoryInformation(characterList);
 
         updateTier5PoAAugmentQuests(characterList);
-        return null; //updateTier5XegonyKeyQuests(characterList);
+        return updateTier5XegonyKeyQuests(characterList);
     }
 
     private List<Tier5PoAAugmentQuest> updateTier5PoAAugmentQuests(List<Character> characterList){

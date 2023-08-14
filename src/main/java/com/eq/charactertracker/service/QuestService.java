@@ -1,7 +1,7 @@
 package com.eq.charactertracker.service;
 
 import com.eq.charactertracker.entity.CharacterEntity;
-import com.eq.charactertracker.entity.quest.QuestItemEntity;
+import com.eq.charactertracker.entity.quest.thf.QuestItemEntity;
 import com.eq.charactertracker.model.Character;
 import com.eq.charactertracker.model.QuestItem;
 import lombok.RequiredArgsConstructor;

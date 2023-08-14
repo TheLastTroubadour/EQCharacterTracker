@@ -3,8 +3,9 @@ package com.eq.charactertracker.entity;
 import com.eq.charactertracker.constants.EquipSlotEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -21,7 +22,8 @@ import javax.persistence.UniqueConstraint;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
+@Setter
+@Getter
 public class CharacterEquipSlotEntity {
 
     @Id

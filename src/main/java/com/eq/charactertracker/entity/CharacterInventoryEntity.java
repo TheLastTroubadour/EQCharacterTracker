@@ -2,8 +2,9 @@ package com.eq.charactertracker.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -17,7 +18,8 @@ import javax.persistence.UniqueConstraint;
 
 @Entity
 @Table(name = "character_inventory", uniqueConstraints = @UniqueConstraint(columnNames = {"slotName", "character_id"}))
-@Data
+@Setter
+@Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

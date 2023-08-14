@@ -1,6 +1,6 @@
 package com.eq.charactertracker.controller;
 
-import com.eq.charactertracker.model.Epic1_5Quest;
+import com.eq.charactertracker.model.quest.thf.Epic1_5Quest;
 import com.eq.charactertracker.service.Epic1_5Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

@@ -2,6 +2,7 @@ package com.eq.charactertracker.controller;
 
 import com.eq.charactertracker.constants.CharacterClass;
 import com.eq.charactertracker.constants.EquipSlotEnum;
+import com.eq.charactertracker.constants.ServerEnum;
 import com.eq.charactertracker.model.CharacterEquipSlot;
 import com.eq.charactertracker.service.CharacterEquipSlotService;
 import lombok.RequiredArgsConstructor;
@@ -26,8 +27,9 @@ public class CharacterEquipSlotController {
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("search")
     public List<CharacterEquipSlot> searchCharactersBySlotAndClass(@RequestParam(value = "slots", required = false) List<EquipSlotEnum> slots,
-                                                                   @RequestParam(value = "classes", required = false)List<CharacterClass> classes){
-        return characterEquipSlotService.searchCharactersByClassesAndSlots(classes, slots);
+                                                                   @RequestParam(value = "classes", required = false) List<CharacterClass> classes,
+                                                                   @RequestParam(value = "server", required = false) ServerEnum serverEnum) {
+        return characterEquipSlotService.searchCharactersByClassesAndSlotsAndServer(classes, slots, serverEnum);
     }
 
     @ResponseStatus(HttpStatus.OK)

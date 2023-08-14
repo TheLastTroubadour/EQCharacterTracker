@@ -1,7 +1,7 @@
 package com.eq.charactertracker.controller;
 
-import com.eq.charactertracker.model.Tier5PoAAugmentQuest;
-import com.eq.charactertracker.model.Tier5XegonyKeyQuest;
+import com.eq.charactertracker.model.quest.thf.Tier5PoAAugmentQuest;
+import com.eq.charactertracker.model.quest.thf.Tier5XegonyKeyQuest;
 import com.eq.charactertracker.service.Tier5QuestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

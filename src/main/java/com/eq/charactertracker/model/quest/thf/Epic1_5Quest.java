@@ -1,6 +1,8 @@
-package com.eq.charactertracker.model;
+package com.eq.charactertracker.model.quest.thf;
 
 import com.eq.charactertracker.base.BaseQuest;
+import com.eq.charactertracker.model.Character;
+import com.eq.charactertracker.model.QuestItem;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

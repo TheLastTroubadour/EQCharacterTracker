@@ -1,9 +1,10 @@
-package com.eq.charactertracker.entity.quest;
+package com.eq.charactertracker.entity.quest.thf;
 
 import com.eq.charactertracker.entity.ItemEntity;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -17,7 +18,8 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name = "quest_item_chart")
-@Data
+@Setter
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 public class QuestItemEntity {

@@ -6,4 +6,6 @@ public class ServerInformation {
     public static final String THF_WEBTOOLS_URL = "http://www.thehiddenforest.org/webtools/";
     public static final String THF_ITEM_LOOKUP_URL = "http://www.thehiddenforest.org/webtools/items.php?name=";
 
+    public static final String PEQ_MAGELO_URL = "http://www.projecteq.net/magelo/index.php";
+
 }

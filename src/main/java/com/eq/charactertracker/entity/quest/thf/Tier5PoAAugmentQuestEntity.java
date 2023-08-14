@@ -1,8 +1,10 @@
-package com.eq.charactertracker.entity.quest;
+package com.eq.charactertracker.entity.quest.thf;
 
-import com.eq.charactertracker.base.BaseTier5Quest;
 import com.eq.charactertracker.entity.CharacterEntity;
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -14,26 +16,27 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 @Entity
-@Data
-@Table(name = "tier_5_xegony_key_quest")
-public class Tier5XegonyKeyQuestEntity extends BaseTier5Quest {
+@Table(name = "Tier_5_PoA_Augment_Quest")
+@Setter
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
+public class Tier5PoAAugmentQuestEntity {
 
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private QuestItemEntity mysticalEssenceOfDust;
+    @ManyToOne
+    private QuestItemEntity questItem;
 
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private QuestItemEntity mysticalEssenceOfMist;
+    private QuestItemEntity windParchment;
 
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private QuestItemEntity mysticalEssenceOfSmoke;
-
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private QuestItemEntity mysticalEssenceOfWind;
+    private QuestItemEntity containerOfMist;
 
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private CharacterEntity character;
+
 }

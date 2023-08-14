@@ -17,6 +17,8 @@ import java.util.Collection;
 @AllArgsConstructor
 @NoArgsConstructor
 public abstract class BaseAttributes {
+
+    @Column(nullable = false)
     private String name;
     //armor class
     @Column(columnDefinition = "Integer default 0", nullable = false)

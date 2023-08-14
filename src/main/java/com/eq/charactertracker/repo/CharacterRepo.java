@@ -10,10 +10,11 @@ import java.util.List;
 @Repository
 public interface CharacterRepo extends JpaRepository<CharacterEntity, Long> {
 
-    CharacterEntity findCharacterEntityByUserIdAndName(Long userId, String name);
+    CharacterEntity findCharacterEntityByUserIdAndNameAndServer(Long userId, String name, ServerEnum server);
     CharacterEntity findCharacterEntityByNameAndServer(String name, ServerEnum server);
 
     List<CharacterEntity> findCharacterEntitiesByUserId(Long userId);
+    List<CharacterEntity> findCharacterEntitiesByUserIdAndServer(Long userId, ServerEnum server);
 
 }
 

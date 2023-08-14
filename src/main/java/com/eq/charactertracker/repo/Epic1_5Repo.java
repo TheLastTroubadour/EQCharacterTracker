@@ -1,6 +1,6 @@
 package com.eq.charactertracker.repo;
 
-import com.eq.charactertracker.entity.quest.Epic1_5QuestEntity;
+import com.eq.charactertracker.entity.quest.thf.Epic1_5QuestEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

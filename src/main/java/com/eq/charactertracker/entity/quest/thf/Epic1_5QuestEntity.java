@@ -1,8 +1,11 @@
-package com.eq.charactertracker.entity.quest;
+package com.eq.charactertracker.entity.quest.thf;
 
 import com.eq.charactertracker.base.BaseQuest;
 import com.eq.charactertracker.entity.CharacterEntity;
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -16,7 +19,10 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name = "epic_1_5_items")
-@Data
+@Setter
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Epic1_5QuestEntity extends BaseQuest {
 
     @Id

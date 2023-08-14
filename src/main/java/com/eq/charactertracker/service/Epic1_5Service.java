@@ -5,10 +5,10 @@ import com.eq.charactertracker.constants.ServerEnum;
 import com.eq.charactertracker.entity.CharacterEntity;
 import com.eq.charactertracker.entity.CharacterInventoryEntity;
 import com.eq.charactertracker.entity.ItemEntity;
-import com.eq.charactertracker.entity.quest.Epic1_5QuestEntity;
-import com.eq.charactertracker.entity.quest.QuestItemEntity;
+import com.eq.charactertracker.entity.quest.thf.Epic1_5QuestEntity;
+import com.eq.charactertracker.entity.quest.thf.QuestItemEntity;
 import com.eq.charactertracker.model.Character;
-import com.eq.charactertracker.model.Epic1_5Quest;
+import com.eq.charactertracker.model.quest.thf.Epic1_5Quest;
 import com.eq.charactertracker.repo.CharacterInventoryRepo;
 import com.eq.charactertracker.repo.CharacterRepo;
 import com.eq.charactertracker.repo.Epic1_5Repo;
@@ -21,6 +21,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -56,7 +57,8 @@ public class Epic1_5Service {
 
     public List<Epic1_5Quest> updateAllEpic1_5Quest(){
         List<Character> characterList = characterService.getAllCharacters();
-        List<Epic1_5Quest> epic15QuestList = new ArrayList<>();
+        //List<Epic1_5Quest> epic15QuestList = new ArrayList<>();
+        List<Epic1_5Quest> epic15QuestList = characterList.stream().map(e -> updateEpic1_5Quest(e)).collect(Collectors.toList());
         characterList.forEach(c -> epic15QuestList.add(updateEpic1_5Quest(c)));
         return epic15QuestList;
     }

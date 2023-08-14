@@ -1,5 +1,7 @@
-package com.eq.charactertracker.model;
+package com.eq.charactertracker.model.quest.thf;
 
+import com.eq.charactertracker.model.Character;
+import com.eq.charactertracker.model.QuestItem;
 import lombok.Data;
 
 @Data

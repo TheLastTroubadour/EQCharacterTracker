@@ -1,14 +1,16 @@
 package com.eq.charactertracker.service;
 
-import com.eq.charactertracker.repo.CharacterRepo;
-import com.eq.charactertracker.repo.UserRepo;
+import com.eq.charactertracker.constants.ServerEnum;
 import com.eq.charactertracker.entity.CharacterEntity;
 import com.eq.charactertracker.entity.UserEntity;
 import com.eq.charactertracker.exception.CharacterAlreadyExistsException;
 import com.eq.charactertracker.exception.CharacterNotFoundException;
 import com.eq.charactertracker.model.Character;
-import lombok.RequiredArgsConstructor;
+import com.eq.charactertracker.repo.CharacterRepo;
+import com.eq.charactertracker.repo.UserRepo;
+import com.eq.charactertracker.service.shared.ICharacterInformationService;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -18,15 +20,22 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 public class CharacterService {
 
-    private final ModelMapper modelMapper;
-    private final CharacterRepo characterRepo;
-    private final UserRepo userRepo;
-    private final THFCharacterService thfCharacterService;
+    @Autowired
+    private ModelMapper modelMapper;
+
+    @Autowired
+    private CharacterRepo characterRepo;
+
+    @Autowired
+    private UserRepo userRepo;
+
+    @Autowired
+    private ICharacterInformationService characterInformationService;
+
     public Character createCharacter(Character character, Long userId) {
-        CharacterEntity characterEntity = characterRepo.findCharacterEntityByUserIdAndName(userId, character.getName());
+        CharacterEntity characterEntity = characterRepo.findCharacterEntityByUserIdAndNameAndServer(userId, character.getName(), character.getServer());
         if(characterEntity != null){
             throw new CharacterAlreadyExistsException(character);
         }
@@ -75,9 +84,24 @@ public class CharacterService {
         return characterList;
     }
 
-    public List<Character> refreshCharacters(Long userId) {
+    public List<Character> getCharactersByUserId(Long userId){
         List<CharacterEntity> characterEntityList = characterRepo.findCharacterEntitiesByUserId(userId);
-        characterEntityList.stream().forEach(e -> thfCharacterService.updateExternalArmorDetails(e));
+        return convertCharacterEntityListToCharacterModelList(characterEntityList);
+    }
+
+    public List<Character> refreshCharacters(Long userId, ServerEnum serverEnum) {
+        List<Character> characters;
+        if(serverEnum != null){
+            characters = getCharacterByUserIdAndServer(userId, serverEnum);
+        }else {
+            characters = getCharactersByUserId(userId);
+        }
+        characterInformationService.updateExternalArmorDetailsForAllCharacters(characters);
+        return characters;
+    }
+
+    private List<Character> getCharacterByUserIdAndServer(Long userId, ServerEnum serverEnum) {
+        List<CharacterEntity> characterEntityList = characterRepo.findCharacterEntitiesByUserIdAndServer(userId, serverEnum);
         return convertCharacterEntityListToCharacterModelList(characterEntityList);
     }
 

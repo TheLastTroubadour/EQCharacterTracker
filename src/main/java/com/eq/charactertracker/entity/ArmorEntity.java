@@ -3,9 +3,11 @@ package com.eq.charactertracker.entity;
 import com.eq.charactertracker.base.BaseAttributes;
 import com.eq.charactertracker.constants.FocusEffect;
 import com.eq.charactertracker.constants.ServerEnum;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -16,7 +18,9 @@ import java.util.Collection;
 
 @Table(name = "armor")
 @Entity
-@Data
+@Setter
+@Getter
+@AllArgsConstructor
 @NoArgsConstructor
 public class ArmorEntity extends BaseAttributes {
 
