@@ -11,7 +11,9 @@ import com.eq.charactertracker.model.CharacterEquipSlot;
 import com.eq.charactertracker.model.WebItemInformation;
 import com.eq.charactertracker.service.ArmorService;
 import com.eq.charactertracker.service.CharacterEquipSlotService;
+import com.eq.charactertracker.service.CharacterService;
 import com.eq.charactertracker.service.DocumentService;
+import com.eq.charactertracker.service.UserService;
 import com.eq.charactertracker.util.CharacterArmorUtil;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +28,12 @@ import java.util.Optional;
 @Getter
 @Slf4j
 public abstract class BaseCharacterInformationService implements ICharacterInformationService {
+
+    @Autowired
+    private CharacterService characterService;
+
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private DocumentService documentService;
@@ -56,14 +64,22 @@ public abstract class BaseCharacterInformationService implements ICharacterInfor
             Elements elements = doc.selectXpath(getWebItemInformationXPath(slotEnum));
             if(elements == null) {
                 //maybe throw an exception?
+                //log and get next one
                 continue;
             }
             WebItemInformation webItemInformation = getArmorNameAndItemUrlAndItemExtId(elements);
+            if(webItemInformation == null){
+                //log and get next one
+                continue;
+            }
             Optional<Armor> armorOptional = getArmorInformation(character, webItemInformation);
 
             Armor armor = null;
             if (armorOptional.isPresent()) {
                 armor = armorOptional.get();
+                //need to update since aug broke it
+                armor = saveArmor(armor, doc, slotEnum);
+
             } else {
                 //If the item url is different than character url
                 if (getItemUrl() != null) {
@@ -94,6 +110,12 @@ public abstract class BaseCharacterInformationService implements ICharacterInfor
         return null;
     }
 
+    private Armor saveArmor(Armor armor, Document doc, EquipSlotEnum slotEnum){
+        addItemStatInformationFromUrlToArmor(armor, slotEnum, doc);
+        CharacterArmorUtil.setNullFieldsToZero(armor);
+        return armorService.save(armor);
+    }
+
     private Armor saveArmor(Character character, Document doc, EquipSlotEnum slotEnum, WebItemInformation webItemInformation){
         String itemName = webItemInformation.getItemName();
         Long itemExtId = webItemInformation.getItemExtId();
@@ -102,11 +124,7 @@ public abstract class BaseCharacterInformationService implements ICharacterInfor
                 .server(character.getServer())
                 .extId(itemExtId)
                 .build();
-        addItemStatInformationFromUrlToArmor(armor, slotEnum, doc);
-        CharacterArmorUtil.setNullFieldsToZero(armor);
-        armor = armorService.save(armor);
-
-        return armor;
+        return saveArmor(armor, doc, slotEnum);
     }
     private Optional<Armor> getArmorInformation(Character character, WebItemInformation webItemInformation){
         String itemName = webItemInformation.getItemName();

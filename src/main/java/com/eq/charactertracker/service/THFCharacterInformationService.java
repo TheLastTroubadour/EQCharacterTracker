@@ -13,6 +13,8 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @Slf4j
 public class THFCharacterInformationService extends BaseCharacterInformationService {
@@ -59,5 +61,11 @@ public class THFCharacterInformationService extends BaseCharacterInformationServ
     @Override
     protected String getWebItemInformationXPath(EquipSlotEnum slotEnum) {
         return "//*[@id='" + slotEnum.getSlotNumber() + "']/*[@class='title-item']/a";
+    }
+
+    @Override
+    public List<Character> createAllCharactersByGuildName(Long userId, String guildName) {
+        //TODO implement this
+        return null;
     }
 }

@@ -53,6 +53,17 @@ public class CharacterController {
         return characterList;
     }
 
+    @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping("user/{userId}/server/{server}/guild/{guild}")
+    public List<Character> createCharactersByServerAndGuildName(
+            @PathVariable Long userId,
+            @PathVariable ServerEnum server,
+            @PathVariable String guild){
+
+        List<Character> characterList = characterService.createCharactersByServerAndGuildName(userId, server, guild);
+        return characterList;
+    }
+
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("{characterId}")
