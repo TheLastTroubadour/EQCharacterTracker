@@ -1,5 +1,6 @@
 package com.eq.charactertracker.model;
 
+import com.eq.charactertracker.constants.ItemType;
 import com.eq.charactertracker.constants.ServerEnum;
 import lombok.Data;
 
@@ -11,7 +12,6 @@ public class Item {
     private String name;
     private ServerEnum server;
     private Short tier;
-    //TODO change this later
-    private String type;
+    private ItemType type;
 
 }

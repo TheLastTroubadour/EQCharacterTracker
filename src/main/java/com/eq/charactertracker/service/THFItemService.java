@@ -1,5 +1,6 @@
 package com.eq.charactertracker.service;
 
+import com.eq.charactertracker.constants.ItemType;
 import com.eq.charactertracker.constants.ServerEnum;
 import com.eq.charactertracker.constants.ServerInformation;
 import com.eq.charactertracker.entity.CharacterEntity;
@@ -120,7 +121,7 @@ public class THFItemService {
             String typePattern = "Type: (\\w+) ";
             Pattern typ = Pattern.compile(typePattern);
             Matcher mTy = typ.matcher(typeElementText);
-            String type = mTy.find() ? mTy.group(1) : "";
+            ItemType type = ItemType.fromWebName(mTy.find() ? mTy.group(1) : "");
             ItemEntity itemEntity = ItemEntity.builder()
                     .externalId(externalId)
                     .name(itemNameElement.text())

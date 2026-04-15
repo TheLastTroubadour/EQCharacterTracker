@@ -1,5 +1,6 @@
 package com.eq.charactertracker.entity;
 
+import com.eq.charactertracker.constants.ItemType;
 import com.eq.charactertracker.constants.ServerEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,11 +8,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "items")
@@ -28,9 +31,11 @@ public class ItemEntity {
 
     private Long externalId;
     private String name;
+    @Enumerated(EnumType.STRING)
     private ServerEnum server;
     private Short tier;
-    //TODO change this later
-    private String type;
+
+    @Enumerated(EnumType.STRING)
+    private ItemType type;
 
 }

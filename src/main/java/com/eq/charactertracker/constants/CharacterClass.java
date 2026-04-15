@@ -29,4 +29,14 @@ public enum CharacterClass {
         this.epic1_5Name = epic1_5Name;
         this.epic2_0Name = epic2_0Name;
     }
+
+    public static CharacterClass fromWebName(String webName) {
+        String normalized = webName.toUpperCase().replace(" ", "");
+        for (CharacterClass cc : values()) {
+            if (cc.name().replace("_", "").equals(normalized)) {
+                return cc;
+            }
+        }
+        throw new IllegalArgumentException("Unknown character class: " + webName);
+    }
 }

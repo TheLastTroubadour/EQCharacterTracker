@@ -2,18 +2,14 @@ package com.eq.charactertracker.service.shared;
 
 import com.eq.charactertracker.constants.EquipSlotEnum;
 import com.eq.charactertracker.constants.ServerEnum;
-import com.eq.charactertracker.constants.peq.PEQWebAtttributesEnum;
 import com.eq.charactertracker.constants.thf.THFWebAttributesEnum;
-import com.eq.charactertracker.factory.CharacterInformationFactory;
 import com.eq.charactertracker.model.Armor;
 import com.eq.charactertracker.model.Character;
 import com.eq.charactertracker.model.CharacterEquipSlot;
 import com.eq.charactertracker.model.WebItemInformation;
 import com.eq.charactertracker.service.ArmorService;
 import com.eq.charactertracker.service.CharacterEquipSlotService;
-import com.eq.charactertracker.service.CharacterService;
 import com.eq.charactertracker.service.DocumentService;
-import com.eq.charactertracker.service.UserService;
 import com.eq.charactertracker.util.CharacterArmorUtil;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -30,28 +26,17 @@ import java.util.Optional;
 public abstract class BaseCharacterInformationService implements ICharacterInformationService {
 
     @Autowired
-    private CharacterService characterService;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
     private DocumentService documentService;
+
     @Autowired
     private ArmorService armorService;
 
     @Autowired
     private CharacterEquipSlotService equipSlotService;
 
-    @Autowired
-    private CharacterInformationFactory characterInformationFactory;
-
     @Override
     public void updateExternalArmorDetailsForAllCharacters(List<Character> characterList) {
-        characterList.forEach(c -> {
-            ICharacterInformationService baseCharacterInformationService = characterInformationFactory.getInstance(c.getServer());
-            baseCharacterInformationService.updateExternalArmorDetails(c);
-        });
+        characterList.forEach(this::updateExternalArmorDetails);
     }
 
     @Override
@@ -133,35 +118,6 @@ public abstract class BaseCharacterInformationService implements ICharacterInfor
         Long itemExtId = webItemInformation.getItemExtId();
         ServerEnum server = character.getServer();
         return armorService.findArmorEntityByExtIdAndServer(itemExtId, server);
-    }
-
-    protected Field replaceFieldValueOnArmor(Armor armor, PEQWebAtttributesEnum peqWebAtttributesEnum, String text){
-                Field field = null;
-        try {
-            field = armor.getClass().getSuperclass().getDeclaredField(peqWebAtttributesEnum.getFieldName());
-
-            String objectValue = !(text.contains("%")) ? text : text.substring(0, text.length() - 1);
-            if (objectValue == null || objectValue.isBlank()) {
-                objectValue = "0";
-            }
-
-            //Object obj = field.getType().equals(Integer.class) ? Integer.valueOf(objectValue) : Double.valueOf(objectValue);
-            Object obj = Integer.valueOf(objectValue);
-            if(field.getType().equals(Double.class)){
-                obj = Double.valueOf(objectValue);
-            }
-            field.setAccessible(true);
-            field.set(armor, obj);
-        } catch (NoSuchFieldException e) {
-            log.error("Unable to access field: " + peqWebAtttributesEnum.getFieldName() + " Field does not exist exception " + e.getMessage());
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            log.error("Unable to access field: " + field + " with illegal access: " + e.getMessage());
-            throw new RuntimeException(e);
-        } finally {
-            field.setAccessible(false);
-        }
-        return field;
     }
 
     protected Field replaceFieldValueOnArmor(Armor armor, THFWebAttributesEnum thfWebAttributesEnum, String text) {

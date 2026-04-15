@@ -1,6 +1,5 @@
 package com.eq.charactertracker.constants;
 
-import com.eq.charactertracker.service.PEQCharacterInformationService;
 import com.eq.charactertracker.service.THFCharacterInformationService;
 import com.eq.charactertracker.service.shared.BaseCharacterInformationService;
 import lombok.Getter;
@@ -13,8 +12,7 @@ import java.util.stream.Collectors;
 @Getter
 public enum CharacterInformationEnum {
 
-    THF(ServerEnum.THF, THFCharacterInformationService.class),
-    PEQ(ServerEnum.PEQ, PEQCharacterInformationService.class);
+    THF(ServerEnum.THF, THFCharacterInformationService.class);
 
     private ServerEnum server;
     private Class<? extends BaseCharacterInformationService> serviceClass;

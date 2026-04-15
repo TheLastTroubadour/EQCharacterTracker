@@ -1,6 +1,6 @@
 package com.eq.charactertracker.base;
 
-import javax.persistence.MappedSuperclass;
+import jakarta.persistence.MappedSuperclass;
 
 @MappedSuperclass
 public class BaseTier5Quest extends BaseQuest{

@@ -9,7 +9,6 @@ import com.eq.charactertracker.service.THFCharacterInformationService;
 import com.eq.charactertracker.service.THFItemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,13 +18,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("character")
-@CrossOrigin(origins = "*")
 public class CharacterController {
     private final CharacterService characterService;
     private final THFCharacterInformationService thfCharacterInformationService;

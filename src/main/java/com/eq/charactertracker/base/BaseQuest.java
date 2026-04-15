@@ -2,7 +2,7 @@ package com.eq.charactertracker.base;
 
 import lombok.Data;
 
-import javax.persistence.MappedSuperclass;
+import jakarta.persistence.MappedSuperclass;
 
 @MappedSuperclass
 @Data

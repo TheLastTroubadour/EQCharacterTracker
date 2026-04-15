@@ -6,9 +6,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import javax.persistence.Column;
-import javax.persistence.ElementCollection;
-import javax.persistence.MappedSuperclass;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.MappedSuperclass;
 import java.util.Collection;
 
 @MappedSuperclass
@@ -109,5 +111,6 @@ public abstract class BaseAttributes {
     private Double strikethrough;
 
     @ElementCollection(targetClass = FocusEffect.class)
+    @Enumerated(EnumType.STRING)
     private Collection<FocusEffect> focusEffect;
 }
