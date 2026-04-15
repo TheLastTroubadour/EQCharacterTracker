@@ -12,25 +12,24 @@ import java.util.stream.Collectors;
 @Getter
 public enum CharacterInformationEnum {
 
-    THF(ServerEnum.THF, THFCharacterInformationService.class);
+    THF("THF", THFCharacterInformationService.class);
 
-    private ServerEnum server;
-    private Class<? extends BaseCharacterInformationService> serviceClass;
+    private final String serverShortName;
+    private final Class<? extends BaseCharacterInformationService> serviceClass;
 
-    private final static Map<ServerEnum, CharacterInformationEnum> map = initMap();
+    private static final Map<String, CharacterInformationEnum> map = initMap();
 
-    private static Map<ServerEnum, CharacterInformationEnum> initMap() {
-        return Arrays.stream(CharacterInformationEnum.values()).collect(Collectors.toMap(e -> e.getServer(), Function.identity()));
+    private static Map<String, CharacterInformationEnum> initMap() {
+        return Arrays.stream(CharacterInformationEnum.values())
+                .collect(Collectors.toMap(CharacterInformationEnum::getServerShortName, Function.identity()));
     }
 
-    CharacterInformationEnum(ServerEnum serverEnum, Class<? extends BaseCharacterInformationService> serviceClass) {
-        this.server = serverEnum;
+    CharacterInformationEnum(String serverShortName, Class<? extends BaseCharacterInformationService> serviceClass) {
+        this.serverShortName = serverShortName;
         this.serviceClass = serviceClass;
     }
 
-    public static CharacterInformationEnum findByServerName(ServerEnum server){
-        return map.get(server);
+    public static CharacterInformationEnum findByServerShortName(String shortName) {
+        return map.get(shortName.toUpperCase());
     }
-
-
 }

@@ -1,12 +1,12 @@
 package com.eq.charactertracker.controller;
 
-import com.eq.charactertracker.constants.ServerEnum;
 import com.eq.charactertracker.model.Character;
 import com.eq.charactertracker.model.CharacterEquipSlot;
 import com.eq.charactertracker.service.CharacterEquipSlotService;
 import com.eq.charactertracker.service.CharacterService;
-import com.eq.charactertracker.service.THFCharacterInformationService;
 import com.eq.charactertracker.service.THFItemService;
+import com.eq.charactertracker.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,74 +18,66 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("character")
 public class CharacterController {
+
     private final CharacterService characterService;
-    private final THFCharacterInformationService thfCharacterInformationService;
     private final THFItemService thfItemService;
     private final CharacterEquipSlotService equipSlotService;
+    private final UserService userService;
 
     @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping({"{userId}"})
-    public Character createCharacter(@RequestBody @Valid Character character, @PathVariable Long userId){
-        Character createdCharacter = characterService.createCharacter(character, userId);
-        return createdCharacter;
+    @PostMapping
+    public Character createCharacter(@RequestBody @Valid Character character) {
+        return characterService.createCharacter(character);
+    }
+
+    @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping("batch")
+    public List<Character> createCharacters(@RequestBody List<@Valid Character> characters) {
+        return characterService.createCharacters(characters);
     }
 
     @ResponseStatus(HttpStatus.OK)
-    @GetMapping("refresh/{userId}")
-    public List<Character> refreshCharacters(@PathVariable Long userId, @RequestParam(required = false,value = "server") ServerEnum server){
-        List<Character> characterList = characterService.refreshCharacters(userId, server);
-        return characterList;
+    @GetMapping("refresh")
+    public List<Character> refreshCharacters(@RequestParam(required = false) String server) {
+        return characterService.refreshCharacters(server);
     }
 
     @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping({"userId"})
-    public List<Character> createCharacters(@RequestBody List<@Valid Character> characters, @PathVariable Long userId) {
-        List<Character> characterList = characterService.createCharacters(characters, userId);
-        return characterList;
-    }
-
-    @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping("user/{userId}/server/{server}/guild/{guild}")
+    @PostMapping("server/{server}/guild/{guild}")
     public List<Character> createCharactersByServerAndGuildName(
-            @PathVariable Long userId,
-            @PathVariable ServerEnum server,
-            @PathVariable String guild){
-
-        List<Character> characterList = characterService.createCharactersByServerAndGuildName(userId, server, guild);
-        return characterList;
+            @PathVariable String server,
+            @PathVariable String guild) {
+        return characterService.createCharactersByServerAndGuildName(server, guild);
     }
-
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("{characterId}")
-    public Character getCharacter(@PathVariable Long characterId){
+    public Character getCharacter(@PathVariable Long characterId) {
         return characterService.getCharacterById(characterId);
     }
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping
-    public List<Character> getAllCharacters(){
+    public List<Character> getAllCharacters() {
         return characterService.getAllCharacters();
     }
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("{characterId}/server/{serverName}/equipped-armor")
-    public List<CharacterEquipSlot> getCharacterArmor(@PathVariable Long characterId, @PathVariable ServerEnum serverName){
+    public List<CharacterEquipSlot> getCharacterArmor(@PathVariable Long characterId,
+                                                       @PathVariable String serverName) {
         return equipSlotService.findCharacterEquipSlotEntitiesByCharacterIdAndCharacterServer(characterId, serverName);
     }
 
     @ResponseStatus(HttpStatus.OK)
-    @GetMapping({"refresh/{userId}/inventory"})
-    public List<Character> refreshInventory(@PathVariable Long userId){
-        return thfItemService.updateInventoryInformation(userId);
+    @GetMapping("refresh/inventory")
+    public List<Character> refreshInventory() {
+        return thfItemService.updateInventoryInformation(userService.getAuthenticatedUser().getId());
     }
-
-
 }

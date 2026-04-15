@@ -113,4 +113,25 @@ public abstract class BaseAttributes {
     @ElementCollection(targetClass = FocusEffect.class)
     @Enumerated(EnumType.STRING)
     private Collection<FocusEffect> focusEffect;
+
+    @Column(columnDefinition = "Integer default 0", nullable = false)
+    private Integer heroicStrength;
+
+    @Column(columnDefinition = "Integer default 0", nullable = false)
+    private Integer heroicStamina;
+
+    @Column(columnDefinition = "Integer default 0", nullable = false)
+    private Integer heroicAgility;
+
+    @Column(columnDefinition = "Integer default 0", nullable = false)
+    private Integer heroicDexterity;
+
+    @Column(columnDefinition = "Integer default 0", nullable = false)
+    private Integer heroicWisdom;
+
+    @Column(columnDefinition = "Integer default 0", nullable = false)
+    private Integer heroicIntelligence;
+
+    @Column(columnDefinition = "Integer default 0", nullable = false)
+    private Integer heroicCharisma;
 }

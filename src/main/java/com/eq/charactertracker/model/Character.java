@@ -1,8 +1,6 @@
 package com.eq.charactertracker.model;
 
 import com.eq.charactertracker.constants.CharacterClass;
-import com.eq.charactertracker.constants.ServerEnum;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,9 +18,8 @@ public class Character implements Serializable {
     @NotNull
     private String name;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING)
     @NotNull
-    private ServerEnum server;
+    private String server;
 
     @NotNull
     private CharacterClass characterClass;

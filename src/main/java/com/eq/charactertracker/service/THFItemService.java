@@ -1,11 +1,11 @@
 package com.eq.charactertracker.service;
 
 import com.eq.charactertracker.constants.ItemType;
-import com.eq.charactertracker.constants.ServerEnum;
 import com.eq.charactertracker.constants.ServerInformation;
 import com.eq.charactertracker.entity.CharacterEntity;
 import com.eq.charactertracker.entity.CharacterInventoryEntity;
 import com.eq.charactertracker.entity.ItemEntity;
+import com.eq.charactertracker.entity.ServerEntity;
 import com.eq.charactertracker.model.Character;
 import com.eq.charactertracker.repo.CharacterInventoryRepo;
 import com.eq.charactertracker.repo.CharacterRepo;
@@ -35,6 +35,9 @@ public class THFItemService {
     private final ModelMapper modelMapper;
     private final ItemRepo itemRepo;
     private final CharacterInventoryRepo characterInventoryRepo;
+    private final ServerService serverService;
+
+    private static final String THF_SHORT_NAME = "THF";
 
     public List<Character> updateInventoryInformation(Long userId) {
         List<CharacterEntity> characterEntityList = characterRepo.findCharacterEntitiesByUserId(userId);
@@ -46,13 +49,14 @@ public class THFItemService {
         return characterList;
     }
 
-    public List<Character> updateInventoryInformation(List<Character> characterList){
+    public List<Character> updateInventoryInformation(List<Character> characterList) {
         characterList.forEach(c -> updateInventoryInformation(c));
         return characterList;
     }
 
-    public Character updateInventoryInformation(Character character){
-        CharacterEntity characterEntity = characterRepo.findCharacterEntityByNameAndServer(character.getName(), character.getServer());
+    public Character updateInventoryInformation(Character character) {
+        ServerEntity server = serverService.findByShortName(character.getServer());
+        CharacterEntity characterEntity = characterRepo.findCharacterEntityByNameAndServer(character.getName(), server);
         updateInventoryInformation(characterEntity);
         return character;
     }
@@ -97,7 +101,6 @@ public class THFItemService {
                 cie.setSlotName(slotName);
 
                 characterInventoryRepo.save(cie);
-
             }
         } catch (IOException e) {
             log.error(String.format("Unable to update inventory information for characterId: %s Exception: %s", character.getId(), e.getMessage()));
@@ -106,6 +109,7 @@ public class THFItemService {
     }
 
     public ItemEntity createItemEntityFromExternalId(Long externalId) {
+        ServerEntity thfServer = serverService.findByShortName(THF_SHORT_NAME);
         Document itemUrlDoc = null;
         try {
             itemUrlDoc = Jsoup.connect(ServerInformation.THF_ITEM_LOOKUP_URL + externalId).get();
@@ -125,7 +129,7 @@ public class THFItemService {
             ItemEntity itemEntity = ItemEntity.builder()
                     .externalId(externalId)
                     .name(itemNameElement.text())
-                    .server(ServerEnum.THF)
+                    .server(thfServer)
                     .tier(Short.valueOf(tier))
                     .type(type)
                     .build();
@@ -133,12 +137,12 @@ public class THFItemService {
             return itemEntity;
         } catch (IOException e) {
             throw new RuntimeException(e);
-
         }
     }
 
-    public ItemEntity createOrGetItemEntity(Long externalId, ServerEnum serverEnum) {
-        Optional<ItemEntity> entity = itemRepo.findItemEntityByExternalIdAndServer(externalId, serverEnum);
+    public ItemEntity createOrGetItemEntity(Long externalId, String serverShortName) {
+        ServerEntity server = serverService.findByShortName(serverShortName);
+        Optional<ItemEntity> entity = itemRepo.findItemEntityByExternalIdAndServer(externalId, server);
         if (entity.isPresent()) {
             return entity.get();
         } else {

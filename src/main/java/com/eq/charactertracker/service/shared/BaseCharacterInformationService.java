@@ -1,7 +1,6 @@
 package com.eq.charactertracker.service.shared;
 
 import com.eq.charactertracker.constants.EquipSlotEnum;
-import com.eq.charactertracker.constants.ServerEnum;
 import com.eq.charactertracker.constants.thf.THFWebAttributesEnum;
 import com.eq.charactertracker.model.Armor;
 import com.eq.charactertracker.model.Character;
@@ -116,7 +115,7 @@ public abstract class BaseCharacterInformationService implements ICharacterInfor
         log.info(String.format("Getting information on Armor: %s", itemName));
         String itemUrl = webItemInformation.getItemUrl();
         Long itemExtId = webItemInformation.getItemExtId();
-        ServerEnum server = character.getServer();
+        String server = character.getServer();
         return armorService.findArmorEntityByExtIdAndServer(itemExtId, server);
     }
 

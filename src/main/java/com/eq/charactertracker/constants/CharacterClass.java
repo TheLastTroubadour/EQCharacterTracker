@@ -30,6 +30,28 @@ public enum CharacterClass {
         this.epic2_0Name = epic2_0Name;
     }
 
+    public static CharacterClass fromAbbreviation(String abbrev) {
+        switch (abbrev.toUpperCase()) {
+            case "WAR": return WARRIOR;
+            case "CLR": return CLERIC;
+            case "PAL": return PALADIN;
+            case "RNG": return RANGER;
+            case "SHD": return SHADOW_KNIGHT;
+            case "DRU": return DRUID;
+            case "BRD": return BARD;
+            case "ROG": return ROGUE;
+            case "SHM": return SHAMAN;
+            case "NEC": return NECROMANCER;
+            case "WIZ": return WIZARD;
+            case "MAG": return MAGICIAN;
+            case "ENC": return ENCHANTER;
+            case "BST": return BEASTLORD;
+            case "BER": return BERSERKER;
+            case "MNK": return MONK;
+            default: throw new IllegalArgumentException("Unknown class abbreviation: " + abbrev);
+        }
+    }
+
     public static CharacterClass fromWebName(String webName) {
         String normalized = webName.toUpperCase().replace(" ", "");
         for (CharacterClass cc : values()) {

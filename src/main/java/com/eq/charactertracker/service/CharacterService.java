@@ -1,20 +1,17 @@
 package com.eq.charactertracker.service;
 
-import com.eq.charactertracker.constants.ServerEnum;
 import com.eq.charactertracker.entity.CharacterEntity;
+import com.eq.charactertracker.entity.ServerEntity;
 import com.eq.charactertracker.entity.UserEntity;
 import com.eq.charactertracker.exception.CharacterAlreadyExistsException;
 import com.eq.charactertracker.exception.CharacterNotFoundException;
 import com.eq.charactertracker.factory.CharacterInformationFactory;
 import com.eq.charactertracker.model.Character;
 import com.eq.charactertracker.repo.CharacterRepo;
-import com.eq.charactertracker.repo.UserRepo;
 import com.eq.charactertracker.service.shared.ICharacterInformationService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -23,45 +20,35 @@ import java.util.Optional;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class CharacterService {
 
-    @Autowired
-    private ModelMapper modelMapper;
+    private final ModelMapper modelMapper;
+    private final CharacterRepo characterRepo;
+    private final UserService userService;
+    private final ServerService serverService;
+    private final ICharacterInformationService characterInformationService;
+    private final CharacterInformationFactory characterInformationFactory;
 
-    @Autowired
-    private CharacterRepo characterRepo;
-
-    @Autowired
-    private UserRepo userRepo;
-
-    @Autowired
-    private ICharacterInformationService characterInformationService;
-
-    @Autowired
-    private CharacterInformationFactory characterInformationFactory;
-
-    public Character createCharacter(Character character, Long userId) {
-        CharacterEntity characterEntity = characterRepo.findCharacterEntityByUserIdAndNameAndServer(userId, character.getName(), character.getServer());
-        if(characterEntity != null){
+    public Character createCharacter(Character character) {
+        UserEntity userEntity = userService.getAuthenticatedUser();
+        ServerEntity server = serverService.findByShortName(character.getServer());
+        CharacterEntity characterEntity = characterRepo.findCharacterEntityByUserIdAndNameAndServer(
+                userEntity.getId(), character.getName(), server);
+        if (characterEntity != null) {
             throw new CharacterAlreadyExistsException(character);
         }
         characterEntity = modelMapper.map(character, CharacterEntity.class);
-        UserEntity userEntity = userRepo.getReferenceById(userId);
+        characterEntity.setServer(server);
         characterEntity.setUser(userEntity);
         characterEntity = characterRepo.save(characterEntity);
-
-        Character returnedCharacter = modelMapper.map(characterEntity, Character.class);
-
-
-        return returnedCharacter;
+        return modelMapper.map(characterEntity, Character.class);
     }
 
     public Character getCharacterById(Long characterId) {
-
         Optional<CharacterEntity> characterEntity = characterRepo.findById(characterId);
-        if(characterEntity.isPresent()) {
-            Character character = modelMapper.map(characterEntity.get(), Character.class);;
-            return character;
+        if (characterEntity.isPresent()) {
+            return modelMapper.map(characterEntity.get(), Character.class);
         }
         throw new CharacterNotFoundException(characterId);
     }
@@ -69,60 +56,50 @@ public class CharacterService {
     public List<Character> getAllCharacters() {
         List<CharacterEntity> characterEntityList = characterRepo.findAll();
         List<Character> characterList = new ArrayList<>();
-        characterEntityList.stream().forEach(ce -> characterList.add(modelMapper.map(ce, Character.class)));
+        characterEntityList.forEach(ce -> characterList.add(modelMapper.map(ce, Character.class)));
         return characterList;
     }
 
-    public List<Character> createCharacters(List<Character> characters, Long userId) {
+    public List<Character> createCharacters(List<Character> characters) {
         List<Character> characterList = new ArrayList<>();
-        for(Character character: characters){
+        for (Character character : characters) {
             try {
-                characterList.add(createCharacter(character, userId));
-            }catch (CharacterAlreadyExistsException e){
+                characterList.add(createCharacter(character));
+            } catch (CharacterAlreadyExistsException e) {
                 log.error(String.format("Unable to create Character: %s in list already exists", character));
             }
         }
         return characterList;
     }
 
-    public List<Character> searchCharacters(Pageable pageable){
-        Page<CharacterEntity> characterEntityList = characterRepo.findAll(pageable);
-        List<Character> characterList = new ArrayList<>();
-        for(CharacterEntity characterEntity: characterEntityList){
-            characterList.add(modelMapper.map(characterEntity, Character.class));
-        }
-        return characterList;
-    }
-
-    public List<Character> getCharactersByUserId(Long userId){
-        List<CharacterEntity> characterEntityList = characterRepo.findCharacterEntitiesByUserId(userId);
-        return convertCharacterEntityListToCharacterModelList(characterEntityList);
-    }
-
-    public List<Character> refreshCharacters(Long userId, ServerEnum serverEnum) {
-        List<Character> characters;
-        if(serverEnum != null){
-            characters = getCharacterByUserIdAndServer(userId, serverEnum);
-        }else {
-            characters = getCharactersByUserId(userId);
-        }
+    public List<Character> refreshCharacters(String serverShortName) {
+        UserEntity user = userService.getAuthenticatedUser();
+        List<Character> characters = serverShortName != null
+                ? getCharacterByUserIdAndServer(user.getId(), serverService.findByShortName(serverShortName))
+                : getCharactersByUserId(user.getId());
         characterInformationService.updateExternalArmorDetailsForAllCharacters(characters);
         return characters;
     }
 
-    private List<Character> getCharacterByUserIdAndServer(Long userId, ServerEnum serverEnum) {
-        List<CharacterEntity> characterEntityList = characterRepo.findCharacterEntitiesByUserIdAndServer(userId, serverEnum);
-        return convertCharacterEntityListToCharacterModelList(characterEntityList);
+    public List<Character> createCharactersByServerAndGuildName(String serverShortName, String guild) {
+        UserEntity user = userService.getAuthenticatedUser();
+        ICharacterInformationService service = characterInformationFactory.getInstance(serverShortName);
+        return service.createAllCharactersByGuildName(user.getId(), guild);
     }
 
-    private List<Character> convertCharacterEntityListToCharacterModelList(List<CharacterEntity> entities){
+    public List<Character> getCharactersByUserId(Long userId) {
+        List<CharacterEntity> characterEntityList = characterRepo.findCharacterEntitiesByUserId(userId);
+        return convertEntityListToModelList(characterEntityList);
+    }
+
+    private List<Character> getCharacterByUserIdAndServer(Long userId, ServerEntity server) {
+        List<CharacterEntity> characterEntityList = characterRepo.findCharacterEntitiesByUserIdAndServer(userId, server);
+        return convertEntityListToModelList(characterEntityList);
+    }
+
+    private List<Character> convertEntityListToModelList(List<CharacterEntity> entities) {
         List<Character> characterList = new ArrayList<>();
-        entities.stream().forEach(e -> characterList.add(modelMapper.map(e, Character.class)));
+        entities.forEach(e -> characterList.add(modelMapper.map(e, Character.class)));
         return characterList;
-    }
-
-    public List<Character> createCharactersByServerAndGuildName(Long userId, ServerEnum server, String guild) {
-        ICharacterInformationService baseCharacterInformationService = characterInformationFactory.getInstance(server);
-        return baseCharacterInformationService.createAllCharactersByGuildName(userId, guild);
     }
 }

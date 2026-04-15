@@ -51,5 +51,7 @@ public class CharacterEquipSlotEntity {
     @JoinColumn(name = "aug2_id")
     private AugmentationEntity aug2;
 
-
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "aug3_id")
+    private AugmentationEntity aug3;
 }

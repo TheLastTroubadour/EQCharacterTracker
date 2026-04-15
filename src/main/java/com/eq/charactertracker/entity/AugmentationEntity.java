@@ -1,19 +1,18 @@
 package com.eq.charactertracker.entity;
 
-
 import com.eq.charactertracker.base.BaseAttributes;
-import com.eq.charactertracker.constants.ServerEnum;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
@@ -32,6 +31,7 @@ public class AugmentationEntity extends BaseAttributes {
 
     private Long extId;
 
-    @Enumerated(EnumType.STRING)
-    private ServerEnum server;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "server_id", nullable = false)
+    private ServerEntity server;
 }
