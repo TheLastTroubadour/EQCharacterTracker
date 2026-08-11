@@ -5,6 +5,7 @@ import com.eq.charactertracker.entity.ServerEntity;
 import com.eq.charactertracker.service.ServerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,13 +25,14 @@ public class ServerController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('ADMIN')")
     public ServerEntity createServer(@RequestBody ServerEntity server) {
         return serverService.save(server);
     }
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<ServerEntity> getServers(@RequestParam(required = false) ServerType type) {
+    public List<ServerEntity> getServers(@RequestParam(name = "type", required = false) ServerType type) {
         return type != null ? serverService.findByType(type) : serverService.findAll();
     }
 }

@@ -13,12 +13,12 @@ import java.util.Collection;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Armor extends BaseAttributes {
+public class ArmorDTO extends BaseAttributes {
     private Long id;
     private Long extId;
     private String server;
 
-    public Armor(ArmorEntity armorEntity) {
+    public ArmorDTO(ArmorEntity armorEntity) {
         this.id = armorEntity.getId();
         this.extId = armorEntity.getExtId();
         this.server = armorEntity.getServer() != null ? armorEntity.getServer().getShortName() : null;
@@ -26,7 +26,7 @@ public class Armor extends BaseAttributes {
     }
 
     @Builder
-    public Armor(String name, Integer ac, Integer strength, Integer stamina, Integer agility, Integer dexterity,
+    public ArmorDTO(String name, Integer ac, Integer strength, Integer stamina, Integer agility, Integer dexterity,
                  Integer wisdom, Integer intelligence, Integer charisma, Integer hitPoints, Integer manaPoints,
                  Integer endurancePoints, Integer fireResist, Integer coldResist, Integer magicResist,
                  Integer diseaseResist, Integer poisonResist, Integer attack, Double accuracy, Double avoidance,

@@ -6,7 +6,7 @@ import com.eq.charactertracker.entity.CharacterEntity;
 import com.eq.charactertracker.entity.CharacterInventoryEntity;
 import com.eq.charactertracker.entity.ItemEntity;
 import com.eq.charactertracker.entity.ServerEntity;
-import com.eq.charactertracker.model.Character;
+import com.eq.charactertracker.model.CharacterDTO;
 import com.eq.charactertracker.repo.CharacterInventoryRepo;
 import com.eq.charactertracker.repo.CharacterRepo;
 import com.eq.charactertracker.repo.ItemRepo;
@@ -39,22 +39,22 @@ public class THFItemService {
 
     private static final String THF_SHORT_NAME = "THF";
 
-    public List<Character> updateInventoryInformation(Long userId) {
+    public List<CharacterDTO> updateInventoryInformation(Long userId) {
         List<CharacterEntity> characterEntityList = characterRepo.findCharacterEntitiesByUserId(userId);
-        List<Character> characterList = new ArrayList<>();
+        List<CharacterDTO> characterList = new ArrayList<>();
         for (CharacterEntity character : characterEntityList) {
             updateInventoryInformation(character);
-            characterList.add(modelMapper.map(character, Character.class));
+            characterList.add(modelMapper.map(character, CharacterDTO.class));
         }
         return characterList;
     }
 
-    public List<Character> updateInventoryInformation(List<Character> characterList) {
+    public List<CharacterDTO> updateInventoryInformation(List<CharacterDTO> characterList) {
         characterList.forEach(c -> updateInventoryInformation(c));
         return characterList;
     }
 
-    public Character updateInventoryInformation(Character character) {
+    public CharacterDTO updateInventoryInformation(CharacterDTO character) {
         ServerEntity server = serverService.findByShortName(character.getServer());
         CharacterEntity characterEntity = characterRepo.findCharacterEntityByNameAndServer(character.getName(), server);
         updateInventoryInformation(characterEntity);

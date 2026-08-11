@@ -1,28 +1,35 @@
 package com.eq.charactertracker.service;
 
+import com.eq.charactertracker.base.BaseServiceImpl;
 import com.eq.charactertracker.constants.CharacterClass;
 import com.eq.charactertracker.constants.ServerType;
 import com.eq.charactertracker.entity.quest.ExpansionEntity;
 import com.eq.charactertracker.entity.quest.QuestTemplateEntity;
 import com.eq.charactertracker.entity.quest.RequirementTemplateEntity;
 import com.eq.charactertracker.entity.quest.SubQuestTemplateEntity;
+import com.eq.charactertracker.model.quest.QuestTemplateDTO;
 import com.eq.charactertracker.model.quest.QuestTemplateRequest;
 import com.eq.charactertracker.model.quest.RequirementTemplateRequest;
 import com.eq.charactertracker.model.quest.SubQuestTemplateRequest;
 import com.eq.charactertracker.repo.quest.ExpansionRepo;
 import com.eq.charactertracker.repo.quest.QuestTemplateRepo;
-import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
-public class QuestTemplateService {
+public class QuestTemplateService extends BaseServiceImpl<QuestTemplateEntity, QuestTemplateDTO> {
 
     private final QuestTemplateRepo questTemplateRepo;
     private final ExpansionRepo expansionRepo;
+
+    public QuestTemplateService(ModelMapper modelMapper, QuestTemplateRepo questTemplateRepo, ExpansionRepo expansionRepo) {
+        super(modelMapper, questTemplateRepo);
+        this.questTemplateRepo = questTemplateRepo;
+        this.expansionRepo = expansionRepo;
+    }
 
     @Transactional
     public QuestTemplateEntity importTemplate(QuestTemplateRequest request) {
@@ -72,18 +79,20 @@ public class QuestTemplateService {
     }
 
     @Transactional
-    public List<QuestTemplateEntity> importTemplates(List<QuestTemplateRequest> requests) {
-        return requests.stream().map(this::importTemplate).toList();
+    public List<QuestTemplateDTO> importTemplates(List<QuestTemplateRequest> requests) {
+        return requests.stream().map(this::importTemplate).map(this::entityToDTO).toList();
     }
 
-    public List<QuestTemplateEntity> getTemplates(ServerType serverType, CharacterClass characterClass) {
+    public List<QuestTemplateDTO> getTemplates(ServerType serverType, CharacterClass characterClass) {
+        List<QuestTemplateEntity> templates;
         if (serverType != null && characterClass != null) {
-            return questTemplateRepo.findByServerTypeAndCharacterClass(serverType, characterClass);
+            templates = questTemplateRepo.findByServerTypeAndCharacterClass(serverType, characterClass);
+        } else if (serverType != null) {
+            templates = questTemplateRepo.findByServerType(serverType);
+        } else {
+            templates = questTemplateRepo.findAll();
         }
-        if (serverType != null) {
-            return questTemplateRepo.findByServerType(serverType);
-        }
-        return questTemplateRepo.findAll();
+        return templates.stream().map(this::entityToDTO).toList();
     }
 
     public QuestTemplateEntity getTemplate(Long id) {

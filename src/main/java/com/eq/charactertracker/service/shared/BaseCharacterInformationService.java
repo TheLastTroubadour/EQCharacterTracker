@@ -2,9 +2,9 @@ package com.eq.charactertracker.service.shared;
 
 import com.eq.charactertracker.constants.EquipSlotEnum;
 import com.eq.charactertracker.constants.thf.THFWebAttributesEnum;
-import com.eq.charactertracker.model.Armor;
-import com.eq.charactertracker.model.Character;
-import com.eq.charactertracker.model.CharacterEquipSlot;
+import com.eq.charactertracker.model.ArmorDTO;
+import com.eq.charactertracker.model.CharacterDTO;
+import com.eq.charactertracker.model.CharacterEquipSlotDTO;
 import com.eq.charactertracker.model.WebItemInformation;
 import com.eq.charactertracker.service.ArmorService;
 import com.eq.charactertracker.service.CharacterEquipSlotService;
@@ -34,12 +34,12 @@ public abstract class BaseCharacterInformationService implements ICharacterInfor
     private CharacterEquipSlotService equipSlotService;
 
     @Override
-    public void updateExternalArmorDetailsForAllCharacters(List<Character> characterList) {
+    public void updateExternalArmorDetailsForAllCharacters(List<CharacterDTO> characterList) {
         characterList.forEach(this::updateExternalArmorDetails);
     }
 
     @Override
-    public void updateExternalArmorDetails(Character character) {
+    public void updateExternalArmorDetails(CharacterDTO character) {
         String characterUrl = getMageloUrl(character);
         CharacterEquipSlotService equipSlotService = getEquipSlotService();
 
@@ -56,9 +56,9 @@ public abstract class BaseCharacterInformationService implements ICharacterInfor
                 //log and get next one
                 continue;
             }
-            Optional<Armor> armorOptional = getArmorInformation(character, webItemInformation);
+            Optional<ArmorDTO> armorOptional = getArmorInformation(character, webItemInformation);
 
-            Armor armor = null;
+            ArmorDTO armor = null;
             if (armorOptional.isPresent()) {
                 armor = armorOptional.get();
                 //need to update since aug broke it
@@ -75,8 +75,8 @@ public abstract class BaseCharacterInformationService implements ICharacterInfor
                 log.info(String.format("Unable to find information on armor for character %s with slot %s", character, slotEnum));
                 continue;
             }
-            Optional<CharacterEquipSlot> optionalCharacterEquipSlot = equipSlotService.findCharacterEquipSlotEntityByCharacterAndEquipSlot(character, slotEnum);
-            CharacterEquipSlot characterEquipSlot = optionalCharacterEquipSlot.orElseGet(CharacterEquipSlot::new);
+            Optional<CharacterEquipSlotDTO> optionalCharacterEquipSlot = equipSlotService.findCharacterEquipSlotEntityByCharacterAndEquipSlot(character, slotEnum);
+            CharacterEquipSlotDTO characterEquipSlot = optionalCharacterEquipSlot.orElseGet(CharacterEquipSlotDTO::new);
 
             characterEquipSlot.setEquipSlot(slotEnum);
             characterEquipSlot.setCharacter(character);
@@ -85,8 +85,8 @@ public abstract class BaseCharacterInformationService implements ICharacterInfor
         }
     }
 
-    protected abstract String getMageloUrl(Character character);
-    protected abstract Armor addItemStatInformationFromUrlToArmor(Armor armor, EquipSlotEnum slotEnum, Document document);
+    protected abstract String getMageloUrl(CharacterDTO character);
+    protected abstract ArmorDTO addItemStatInformationFromUrlToArmor(ArmorDTO armor, EquipSlotEnum slotEnum, Document document);
     protected abstract String getWebItemInformationXPath(EquipSlotEnum slotEnum);
     protected abstract WebItemInformation getArmorNameAndItemUrlAndItemExtId(Elements elements);
 
@@ -94,23 +94,23 @@ public abstract class BaseCharacterInformationService implements ICharacterInfor
         return null;
     }
 
-    private Armor saveArmor(Armor armor, Document doc, EquipSlotEnum slotEnum){
+    private ArmorDTO saveArmor(ArmorDTO armor, Document doc, EquipSlotEnum slotEnum){
         addItemStatInformationFromUrlToArmor(armor, slotEnum, doc);
         CharacterArmorUtil.setNullFieldsToZero(armor);
         return armorService.save(armor);
     }
 
-    private Armor saveArmor(Character character, Document doc, EquipSlotEnum slotEnum, WebItemInformation webItemInformation){
+    private ArmorDTO saveArmor(CharacterDTO character, Document doc, EquipSlotEnum slotEnum, WebItemInformation webItemInformation){
         String itemName = webItemInformation.getItemName();
         Long itemExtId = webItemInformation.getItemExtId();
-        Armor armor = Armor.builder()
+        ArmorDTO armor = ArmorDTO.builder()
                 .name(itemName)
                 .server(character.getServer())
                 .extId(itemExtId)
                 .build();
         return saveArmor(armor, doc, slotEnum);
     }
-    private Optional<Armor> getArmorInformation(Character character, WebItemInformation webItemInformation){
+    private Optional<ArmorDTO> getArmorInformation(CharacterDTO character, WebItemInformation webItemInformation){
         String itemName = webItemInformation.getItemName();
         log.info(String.format("Getting information on Armor: %s", itemName));
         String itemUrl = webItemInformation.getItemUrl();
@@ -119,7 +119,7 @@ public abstract class BaseCharacterInformationService implements ICharacterInfor
         return armorService.findArmorEntityByExtIdAndServer(itemExtId, server);
     }
 
-    protected Field replaceFieldValueOnArmor(Armor armor, THFWebAttributesEnum thfWebAttributesEnum, String text) {
+    protected Field replaceFieldValueOnArmor(ArmorDTO armor, THFWebAttributesEnum thfWebAttributesEnum, String text) {
         Field field = null;
         try {
             field = armor.getClass().getSuperclass().getDeclaredField(thfWebAttributesEnum.getFieldName());

@@ -1,7 +1,7 @@
 package com.eq.charactertracker.controller;
 
-import com.eq.charactertracker.model.Character;
-import com.eq.charactertracker.model.CharacterEquipSlot;
+import com.eq.charactertracker.model.CharacterDTO;
+import com.eq.charactertracker.model.CharacterEquipSlotDTO;
 import com.eq.charactertracker.service.CharacterEquipSlotService;
 import com.eq.charactertracker.service.CharacterService;
 import com.eq.charactertracker.service.THFItemService;
@@ -32,25 +32,25 @@ public class CharacterController {
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
-    public Character createCharacter(@RequestBody @Valid Character character) {
+    public CharacterDTO createCharacter(@RequestBody @Valid CharacterDTO character) {
         return characterService.createCharacter(character);
     }
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("batch")
-    public List<Character> createCharacters(@RequestBody List<@Valid Character> characters) {
+    public List<CharacterDTO> createCharacters(@RequestBody List<@Valid CharacterDTO> characters) {
         return characterService.createCharacters(characters);
     }
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("refresh")
-    public List<Character> refreshCharacters(@RequestParam(required = false) String server) {
+    public List<CharacterDTO> refreshCharacters(@RequestParam(name = "server", required = false) String server) {
         return characterService.refreshCharacters(server);
     }
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("server/{server}/guild/{guild}")
-    public List<Character> createCharactersByServerAndGuildName(
+    public List<CharacterDTO> createCharactersByServerAndGuildName(
             @PathVariable String server,
             @PathVariable String guild) {
         return characterService.createCharactersByServerAndGuildName(server, guild);
@@ -58,26 +58,26 @@ public class CharacterController {
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("{characterId}")
-    public Character getCharacter(@PathVariable Long characterId) {
+    public CharacterDTO getCharacter(@PathVariable Long characterId) {
         return characterService.getCharacterById(characterId);
     }
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping
-    public List<Character> getAllCharacters() {
+    public List<CharacterDTO> getAllCharacters() {
         return characterService.getAllCharacters();
     }
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("{characterId}/server/{serverName}/equipped-armor")
-    public List<CharacterEquipSlot> getCharacterArmor(@PathVariable Long characterId,
+    public List<CharacterEquipSlotDTO> getCharacterArmor(@PathVariable Long characterId,
                                                        @PathVariable String serverName) {
         return equipSlotService.findCharacterEquipSlotEntitiesByCharacterIdAndCharacterServer(characterId, serverName);
     }
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("refresh/inventory")
-    public List<Character> refreshInventory() {
+    public List<CharacterDTO> refreshInventory() {
         return thfItemService.updateInventoryInformation(userService.getAuthenticatedUser().getId());
     }
 }

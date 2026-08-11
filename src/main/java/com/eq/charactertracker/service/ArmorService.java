@@ -1,39 +1,38 @@
 package com.eq.charactertracker.service;
 
+import com.eq.charactertracker.base.BaseServiceImpl;
 import com.eq.charactertracker.entity.ArmorEntity;
 import com.eq.charactertracker.entity.ServerEntity;
-import com.eq.charactertracker.model.Armor;
+import com.eq.charactertracker.model.ArmorDTO;
 import com.eq.charactertracker.repo.ArmorRepo;
-import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
-public class ArmorService {
+public class ArmorService extends BaseServiceImpl<ArmorEntity, ArmorDTO> {
 
     private final ArmorRepo armorRepo;
-    private final ModelMapper modelMapper;
     private final ServerService serverService;
 
-    public Optional<Armor> findArmorEntityByExtIdAndServer(Long extItemId, String serverShortName) {
-        ServerEntity server = serverService.findByShortName(serverShortName);
-        Optional<ArmorEntity> armorEntity = armorRepo.findArmorEntityByExtIdAndServer(extItemId, server);
-        if (armorEntity.isPresent()) {
-            Armor armor = modelMapper.map(armorEntity.get(), Armor.class);
-            return Optional.of(armor);
-        }
-        return Optional.empty();
+    public ArmorService(ModelMapper modelMapper, ArmorRepo armorRepo, ServerService serverService) {
+        super(modelMapper, armorRepo);
+        this.armorRepo = armorRepo;
+        this.serverService = serverService;
     }
 
-    public Armor save(Armor armor) {
-        ArmorEntity armorEntity = modelMapper.map(armor, ArmorEntity.class);
+    public Optional<ArmorDTO> findArmorEntityByExtIdAndServer(Long extItemId, String serverShortName) {
+        ServerEntity server = serverService.findByShortName(serverShortName);
+        return armorRepo.findArmorEntityByExtIdAndServer(extItemId, server).map(this::entityToDTO);
+    }
+
+    public ArmorDTO save(ArmorDTO armor) {
+        ArmorEntity armorEntity = dtoToEntity(armor);
         if (armor.getServer() != null) {
             armorEntity.setServer(serverService.findByShortName(armor.getServer()));
         }
         armorEntity = armorRepo.save(armorEntity);
-        return modelMapper.map(armorEntity, Armor.class);
+        return entityToDTO(armorEntity);
     }
 }

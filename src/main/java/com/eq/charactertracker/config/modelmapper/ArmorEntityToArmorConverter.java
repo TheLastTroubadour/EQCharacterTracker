@@ -1,17 +1,17 @@
 package com.eq.charactertracker.config.modelmapper;
 
 import com.eq.charactertracker.entity.ArmorEntity;
-import com.eq.charactertracker.model.Armor;
+import com.eq.charactertracker.model.ArmorDTO;
 import org.modelmapper.Converter;
 import org.modelmapper.spi.MappingContext;
 
 
-public class ArmorEntityToArmorConverter implements Converter<ArmorEntity, Armor> {
+public class ArmorEntityToArmorConverter implements Converter<ArmorEntity, ArmorDTO> {
 
     @Override
-    public Armor convert(MappingContext<ArmorEntity, Armor> mappingContext) {
+    public ArmorDTO convert(MappingContext<ArmorEntity, ArmorDTO> mappingContext) {
         ArmorEntity armorEntity = mappingContext.getSource();
-        Armor armor = new Armor(armorEntity);
+        ArmorDTO armor = new ArmorDTO(armorEntity);
         return armor;
     }
 }

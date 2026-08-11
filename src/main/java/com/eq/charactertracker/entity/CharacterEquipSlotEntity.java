@@ -1,5 +1,6 @@
 package com.eq.charactertracker.entity;
 
+import com.eq.charactertracker.base.BaseEntity;
 import com.eq.charactertracker.constants.EquipSlotEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,7 +27,7 @@ import jakarta.persistence.UniqueConstraint;
 @AllArgsConstructor
 @Setter
 @Getter
-public class CharacterEquipSlotEntity {
+public class CharacterEquipSlotEntity implements BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

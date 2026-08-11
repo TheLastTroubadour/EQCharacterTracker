@@ -8,11 +8,11 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CharacterEquipSlot {
+public class CharacterEquipSlotDTO {
     private Long id;
     private EquipSlotEnum equipSlot;
-    private Character character;
-    private Armor armor;
+    private CharacterDTO character;
+    private ArmorDTO armor;
     private Augmentation aug1;
     private Augmentation aug2;
 }

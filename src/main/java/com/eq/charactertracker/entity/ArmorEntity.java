@@ -1,6 +1,7 @@
 package com.eq.charactertracker.entity;
 
 import com.eq.charactertracker.base.BaseAttributes;
+import com.eq.charactertracker.base.BaseEntity;
 import com.eq.charactertracker.constants.FocusEffect;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,7 +25,7 @@ import java.util.Collection;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ArmorEntity extends BaseAttributes {
+public class ArmorEntity extends BaseAttributes implements BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -3,8 +3,8 @@ package com.eq.charactertracker.service;
 import com.eq.charactertracker.constants.EquipSlotEnum;
 import com.eq.charactertracker.constants.ServerInformation;
 import com.eq.charactertracker.constants.thf.THFWebAttributesEnum;
-import com.eq.charactertracker.model.Armor;
-import com.eq.charactertracker.model.Character;
+import com.eq.charactertracker.model.ArmorDTO;
+import com.eq.charactertracker.model.CharacterDTO;
 import com.eq.charactertracker.model.WebItemInformation;
 import com.eq.charactertracker.service.shared.BaseCharacterInformationService;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ import java.util.List;
 public class THFCharacterInformationService extends BaseCharacterInformationService {
 
     @Override
-    protected String getMageloUrl(Character character) {
+    protected String getMageloUrl(CharacterDTO character) {
         return ServerInformation.THF_MAGELO_URL + "character=" + character.getName();
     }
 
@@ -36,7 +36,7 @@ public class THFCharacterInformationService extends BaseCharacterInformationServ
     }
 
     @Override
-    protected Armor addItemStatInformationFromUrlToArmor(Armor armor, EquipSlotEnum equipSlotEnum, Document document) {
+    protected ArmorDTO addItemStatInformationFromUrlToArmor(ArmorDTO armor, EquipSlotEnum equipSlotEnum, Document document) {
         Document itemDoc = null;
         String itemUrl = getItemUrl();
         if(itemUrl != null) {
@@ -64,7 +64,7 @@ public class THFCharacterInformationService extends BaseCharacterInformationServ
     }
 
     @Override
-    public List<Character> createAllCharactersByGuildName(Long userId, String guildName) {
+    public List<CharacterDTO> createAllCharactersByGuildName(Long userId, String guildName) {
         //TODO implement this
         return null;
     }

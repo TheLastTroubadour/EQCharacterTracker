@@ -2,9 +2,11 @@ package com.eq.charactertracker.controller;
 
 import com.eq.charactertracker.constants.ServerType;
 import com.eq.charactertracker.entity.quest.ExpansionEntity;
-import com.eq.charactertracker.repo.quest.ExpansionRepo;
+import com.eq.charactertracker.model.quest.ExpansionDTO;
+import com.eq.charactertracker.service.ExpansionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,17 +22,18 @@ import java.util.List;
 @RequestMapping("expansion")
 public class ExpansionController {
 
-    private final ExpansionRepo expansionRepo;
+    private final ExpansionService expansionService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ExpansionEntity createExpansion(@RequestBody ExpansionEntity expansion) {
-        return expansionRepo.save(expansion);
+    @PreAuthorize("hasRole('ADMIN')")
+    public ExpansionDTO createExpansion(@RequestBody ExpansionEntity expansion) {
+        return expansionService.createExpansion(expansion);
     }
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<ExpansionEntity> getExpansions(@RequestParam ServerType serverType) {
-        return expansionRepo.findByServerTypeOrderByReleaseOrderAsc(serverType);
+    public List<ExpansionDTO> getExpansions(@RequestParam("serverType") ServerType serverType) {
+        return expansionService.getExpansions(serverType);
     }
 }

@@ -1,5 +1,6 @@
 package com.eq.charactertracker.entity.quest;
 
+import com.eq.charactertracker.base.BaseEntity;
 import com.eq.charactertracker.constants.ServerType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -18,7 +19,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class ExpansionEntity {
+public class ExpansionEntity implements BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

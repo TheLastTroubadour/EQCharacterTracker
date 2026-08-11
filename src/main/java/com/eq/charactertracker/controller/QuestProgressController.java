@@ -26,8 +26,8 @@ public class QuestProgressController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CharacterQuestProgressResponse startQuest(
-            @RequestParam Long characterId,
-            @RequestParam Long questTemplateId) {
+            @RequestParam("characterId") Long characterId,
+            @RequestParam("questTemplateId") Long questTemplateId) {
         return questProgressService.startQuest(characterId, questTemplateId);
     }
 

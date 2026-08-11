@@ -11,7 +11,7 @@ import java.io.Serializable;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Character implements Serializable {
+public class CharacterDTO implements Serializable {
 
     private Long id;
 
@@ -28,5 +28,5 @@ public class Character implements Serializable {
     private Short aaSpent;
     private Short aaAvailable;
 
-    private User user;
+    private UserDTO user;
 }

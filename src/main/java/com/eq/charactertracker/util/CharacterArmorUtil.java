@@ -1,13 +1,13 @@
 package com.eq.charactertracker.util;
 
-import com.eq.charactertracker.model.Armor;
+import com.eq.charactertracker.model.ArmorDTO;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Field;
 
 @Slf4j
 public class CharacterArmorUtil {
-    public static void setNullFieldsToZero(Armor armor) {
+    public static void setNullFieldsToZero(ArmorDTO armor) {
         Field[] superClassFields = armor.getClass().getSuperclass().getDeclaredFields();
 
         for(Field field: superClassFields){

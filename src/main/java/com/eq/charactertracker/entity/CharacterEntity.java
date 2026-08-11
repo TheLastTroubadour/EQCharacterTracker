@@ -1,5 +1,6 @@
 package com.eq.charactertracker.entity;
 
+import com.eq.charactertracker.base.BaseEntity;
 import com.eq.charactertracker.constants.CharacterClass;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -26,7 +27,7 @@ import jakarta.persistence.UniqueConstraint;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CharacterEntity {
+public class CharacterEntity implements BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

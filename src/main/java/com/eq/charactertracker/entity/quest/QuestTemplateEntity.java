@@ -1,5 +1,6 @@
 package com.eq.charactertracker.entity.quest;
 
+import com.eq.charactertracker.base.BaseEntity;
 import com.eq.charactertracker.constants.CharacterClass;
 import com.eq.charactertracker.constants.ServerType;
 import jakarta.persistence.CascadeType;
@@ -28,7 +29,7 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class QuestTemplateEntity {
+public class QuestTemplateEntity implements BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -46,7 +47,7 @@ public class QuestTemplateEntity {
 
     private boolean progressionQuest;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "expansion_id")
     private ExpansionEntity expansion;
 

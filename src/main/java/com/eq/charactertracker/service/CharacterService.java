@@ -1,36 +1,43 @@
 package com.eq.charactertracker.service;
 
+import com.eq.charactertracker.base.BaseServiceImpl;
 import com.eq.charactertracker.entity.CharacterEntity;
 import com.eq.charactertracker.entity.ServerEntity;
 import com.eq.charactertracker.entity.UserEntity;
 import com.eq.charactertracker.exception.CharacterAlreadyExistsException;
-import com.eq.charactertracker.exception.CharacterNotFoundException;
 import com.eq.charactertracker.factory.CharacterInformationFactory;
-import com.eq.charactertracker.model.Character;
+import com.eq.charactertracker.model.CharacterDTO;
 import com.eq.charactertracker.repo.CharacterRepo;
 import com.eq.charactertracker.service.shared.ICharacterInformationService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
-public class CharacterService {
+public class CharacterService extends BaseServiceImpl<CharacterEntity, CharacterDTO> {
 
-    private final ModelMapper modelMapper;
     private final CharacterRepo characterRepo;
     private final UserService userService;
     private final ServerService serverService;
     private final ICharacterInformationService characterInformationService;
     private final CharacterInformationFactory characterInformationFactory;
 
-    public Character createCharacter(Character character) {
+    public CharacterService(ModelMapper modelMapper, CharacterRepo characterRepo, UserService userService,
+                             ServerService serverService, ICharacterInformationService characterInformationService,
+                             CharacterInformationFactory characterInformationFactory) {
+        super(modelMapper, characterRepo);
+        this.characterRepo = characterRepo;
+        this.userService = userService;
+        this.serverService = serverService;
+        this.characterInformationService = characterInformationService;
+        this.characterInformationFactory = characterInformationFactory;
+    }
+
+    public CharacterDTO createCharacter(CharacterDTO character) {
         UserEntity userEntity = userService.getAuthenticatedUser();
         ServerEntity server = serverService.findByShortName(character.getServer());
         CharacterEntity characterEntity = characterRepo.findCharacterEntityByUserIdAndNameAndServer(
@@ -38,31 +45,24 @@ public class CharacterService {
         if (characterEntity != null) {
             throw new CharacterAlreadyExistsException(character);
         }
-        characterEntity = modelMapper.map(character, CharacterEntity.class);
+        characterEntity = dtoToEntity(character);
         characterEntity.setServer(server);
         characterEntity.setUser(userEntity);
         characterEntity = characterRepo.save(characterEntity);
-        return modelMapper.map(characterEntity, Character.class);
+        return entityToDTO(characterEntity);
     }
 
-    public Character getCharacterById(Long characterId) {
-        Optional<CharacterEntity> characterEntity = characterRepo.findById(characterId);
-        if (characterEntity.isPresent()) {
-            return modelMapper.map(characterEntity.get(), Character.class);
-        }
-        throw new CharacterNotFoundException(characterId);
+    public CharacterDTO getCharacterById(Long characterId) {
+        return getById(characterId);
     }
 
-    public List<Character> getAllCharacters() {
-        List<CharacterEntity> characterEntityList = characterRepo.findAll();
-        List<Character> characterList = new ArrayList<>();
-        characterEntityList.forEach(ce -> characterList.add(modelMapper.map(ce, Character.class)));
-        return characterList;
+    public List<CharacterDTO> getAllCharacters() {
+        return characterRepo.findAll().stream().map(this::entityToDTO).toList();
     }
 
-    public List<Character> createCharacters(List<Character> characters) {
-        List<Character> characterList = new ArrayList<>();
-        for (Character character : characters) {
+    public List<CharacterDTO> createCharacters(List<CharacterDTO> characters) {
+        List<CharacterDTO> characterList = new ArrayList<>();
+        for (CharacterDTO character : characters) {
             try {
                 characterList.add(createCharacter(character));
             } catch (CharacterAlreadyExistsException e) {
@@ -72,34 +72,28 @@ public class CharacterService {
         return characterList;
     }
 
-    public List<Character> refreshCharacters(String serverShortName) {
+    public List<CharacterDTO> refreshCharacters(String serverShortName) {
         UserEntity user = userService.getAuthenticatedUser();
-        List<Character> characters = serverShortName != null
+        List<CharacterDTO> characters = serverShortName != null
                 ? getCharacterByUserIdAndServer(user.getId(), serverService.findByShortName(serverShortName))
                 : getCharactersByUserId(user.getId());
         characterInformationService.updateExternalArmorDetailsForAllCharacters(characters);
         return characters;
     }
 
-    public List<Character> createCharactersByServerAndGuildName(String serverShortName, String guild) {
+    public List<CharacterDTO> createCharactersByServerAndGuildName(String serverShortName, String guild) {
         UserEntity user = userService.getAuthenticatedUser();
         ICharacterInformationService service = characterInformationFactory.getInstance(serverShortName);
         return service.createAllCharactersByGuildName(user.getId(), guild);
     }
 
-    public List<Character> getCharactersByUserId(Long userId) {
+    public List<CharacterDTO> getCharactersByUserId(Long userId) {
         List<CharacterEntity> characterEntityList = characterRepo.findCharacterEntitiesByUserId(userId);
-        return convertEntityListToModelList(characterEntityList);
+        return characterEntityList.stream().map(this::entityToDTO).toList();
     }
 
-    private List<Character> getCharacterByUserIdAndServer(Long userId, ServerEntity server) {
+    private List<CharacterDTO> getCharacterByUserIdAndServer(Long userId, ServerEntity server) {
         List<CharacterEntity> characterEntityList = characterRepo.findCharacterEntitiesByUserIdAndServer(userId, server);
-        return convertEntityListToModelList(characterEntityList);
-    }
-
-    private List<Character> convertEntityListToModelList(List<CharacterEntity> entities) {
-        List<Character> characterList = new ArrayList<>();
-        entities.forEach(e -> characterList.add(modelMapper.map(e, Character.class)));
-        return characterList;
+        return characterEntityList.stream().map(this::entityToDTO).toList();
     }
 }

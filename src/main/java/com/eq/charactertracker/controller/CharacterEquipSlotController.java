@@ -2,7 +2,7 @@ package com.eq.charactertracker.controller;
 
 import com.eq.charactertracker.constants.CharacterClass;
 import com.eq.charactertracker.constants.EquipSlotEnum;
-import com.eq.charactertracker.model.CharacterEquipSlot;
+import com.eq.charactertracker.model.CharacterEquipSlotDTO;
 import com.eq.charactertracker.service.CharacterEquipSlotService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,7 +23,7 @@ public class CharacterEquipSlotController {
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("search")
-    public List<CharacterEquipSlot> searchCharactersBySlotAndClass(
+    public List<CharacterEquipSlotDTO> searchCharactersBySlotAndClass(
             @RequestParam(value = "slots", required = false) List<EquipSlotEnum> slots,
             @RequestParam(value = "classes", required = false) List<CharacterClass> classes,
             @RequestParam(value = "server", required = false) String server) {
@@ -32,7 +32,7 @@ public class CharacterEquipSlotController {
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping
-    public List<CharacterEquipSlot> getAllCharactersArmorSlots() {
+    public List<CharacterEquipSlotDTO> getAllCharactersArmorSlots() {
         return characterEquipSlotService.getAllCharacterArmorSlots();
     }
 }
