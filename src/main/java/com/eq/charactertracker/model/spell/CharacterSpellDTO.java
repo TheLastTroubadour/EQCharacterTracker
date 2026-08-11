@@ -3,7 +3,7 @@ package com.eq.charactertracker.model.spell;
 import lombok.Data;
 
 @Data
-public class CharacterSpellResponse {
+public class CharacterSpellDTO {
     private Long spellId;
     private Long characterSpellId;
     private String name;

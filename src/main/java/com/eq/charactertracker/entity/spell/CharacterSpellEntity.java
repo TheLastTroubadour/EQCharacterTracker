@@ -1,5 +1,6 @@
 package com.eq.charactertracker.entity.spell;
 
+import com.eq.charactertracker.base.BaseEntity;
 import com.eq.charactertracker.entity.CharacterEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -19,7 +20,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class CharacterSpellEntity {
+public class CharacterSpellEntity implements BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

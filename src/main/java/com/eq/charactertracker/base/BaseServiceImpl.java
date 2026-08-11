@@ -5,6 +5,7 @@ import com.eq.charactertracker.repo.BaseRepo;
 import lombok.Getter;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.reflect.ParameterizedType;
 
@@ -43,6 +44,7 @@ public abstract class BaseServiceImpl<E extends BaseEntity, T> implements BaseSe
     }
 
     @Override
+    @Transactional
     public T create(T tObject) {
         E entity = dtoToEntity(tObject);
         entity = baseRepo.save(entity);
@@ -50,6 +52,7 @@ public abstract class BaseServiceImpl<E extends BaseEntity, T> implements BaseSe
     }
 
     @Override
+    @Transactional
     public T update(T tObject, long id) {
         E entity = dtoToEntity(tObject);
         entity.setId(id);
@@ -58,6 +61,7 @@ public abstract class BaseServiceImpl<E extends BaseEntity, T> implements BaseSe
     }
 
     @Override
+    @Transactional
     public boolean delete(long id) {
         baseRepo.deleteById(id);
         if(baseRepo.findById(id).isPresent()){

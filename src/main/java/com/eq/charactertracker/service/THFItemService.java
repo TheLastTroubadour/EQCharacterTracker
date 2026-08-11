@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+// TODO: migrate ItemEntity CRUD to BaseServiceImpl pattern, keep scraping methods separate
 @Service
 @Slf4j
 @RequiredArgsConstructor

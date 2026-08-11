@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+// TODO: rename *Response classes to *DTO and consider wiring to BaseServiceImpl pattern
 @Service
 @RequiredArgsConstructor
 public class QuestProgressService {

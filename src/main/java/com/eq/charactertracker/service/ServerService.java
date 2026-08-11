@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+// TODO: migrate to BaseServiceImpl pattern (needs a ServerDTO first, see feedback_service_architecture memory)
 @Service
 @RequiredArgsConstructor
 public class ServerService {
