@@ -2,6 +2,7 @@ package com.eq.charactertracker.service;
 
 import com.eq.charactertracker.constants.CharacterClass;
 import com.eq.charactertracker.constants.EquipSlotEnum;
+import com.eq.charactertracker.constants.ServerType;
 import com.eq.charactertracker.entity.ArmorEntity;
 import com.eq.charactertracker.entity.AugmentationEntity;
 import com.eq.charactertracker.entity.CharacterEntity;
@@ -10,18 +11,23 @@ import com.eq.charactertracker.entity.CharacterInventoryEntity;
 import com.eq.charactertracker.entity.ItemEntity;
 import com.eq.charactertracker.entity.ServerEntity;
 import com.eq.charactertracker.entity.UserEntity;
+import com.eq.charactertracker.entity.spell.CharacterSpellEntity;
+import com.eq.charactertracker.entity.spell.SpellEntity;
 import com.eq.charactertracker.model.imports.AugmentationImport;
 import com.eq.charactertracker.model.imports.CharacterImportInfo;
 import com.eq.charactertracker.model.imports.CharacterImportRequest;
 import com.eq.charactertracker.model.imports.EquippedItemImport;
 import com.eq.charactertracker.model.imports.ImportResult;
 import com.eq.charactertracker.model.imports.InventoryItemImport;
+import com.eq.charactertracker.model.imports.SpellImport;
 import com.eq.charactertracker.repo.ArmorRepo;
 import com.eq.charactertracker.repo.AugmentationRepo;
 import com.eq.charactertracker.repo.CharacterInventoryRepo;
 import com.eq.charactertracker.repo.CharacterRepo;
 import com.eq.charactertracker.repo.EquipSlotRepo;
 import com.eq.charactertracker.repo.ItemRepo;
+import com.eq.charactertracker.repo.spell.CharacterSpellRepo;
+import com.eq.charactertracker.repo.spell.SpellRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,11 +35,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ImportService {
+
+    private static final Pattern RANK_SUFFIX_PATTERN = Pattern.compile("^(.*) Rk\\. (II|III)$");
 
     private final UserService userService;
     private final ServerService serverService;
@@ -43,6 +53,8 @@ public class ImportService {
     private final EquipSlotRepo equipSlotRepo;
     private final ItemRepo itemRepo;
     private final CharacterInventoryRepo characterInventoryRepo;
+    private final SpellRepo spellRepo;
+    private final CharacterSpellRepo characterSpellRepo;
 
     @Transactional
     public List<ImportResult> importCharacters(List<CharacterImportRequest> requests) {
@@ -86,6 +98,19 @@ public class ImportService {
                 } catch (IllegalArgumentException e) {
                     String msg = String.format("Skipped inventory [%s] slot=%s extId=%d: %s",
                             item.getName(), item.getSlot(), item.getExternalId(), e.getMessage());
+                    log.warn(msg);
+                    result.addSkipped(msg);
+                }
+            }
+        }
+
+        if (request.getSpells() != null) {
+            characterSpellRepo.resetScribedForCharacter(character.getId());
+            for (SpellImport spell : request.getSpells()) {
+                try {
+                    result.setSpellsImported(result.getSpellsImported() + processSpell(spell, character));
+                } catch (IllegalArgumentException e) {
+                    String msg = String.format("Skipped spell [%s]: %s", spell.getName(), e.getMessage());
                     log.warn(msg);
                     result.addSkipped(msg);
                 }
@@ -256,6 +281,53 @@ public class ImportService {
                 .item(itemEntity)
                 .build();
         characterInventoryRepo.save(inventory);
+    }
+
+    // name/rankName carry the rank suffix when present (e.g. "Cloak of Corruption Rk. II"),
+    // not the catalog's base name -- strip it to get the lookup key and the max rank.
+    // Scribing rank 2 replaces rank 1 in the spellbook, rank 3 replaces rank 2 -- so
+    // having rank N scribed means every rank below N was scribed too, and we mark all
+    // of them.
+    private int processSpell(SpellImport spellImport, CharacterEntity character) {
+        ServerType serverType = character.getServer().getType();
+        String rankName = spellImport.getRankName() != null ? spellImport.getRankName() : spellImport.getName();
+        rankName = normalizeSpellName(rankName);
+
+        String baseName = rankName;
+        short maxRank = 1;
+        Matcher m = RANK_SUFFIX_PATTERN.matcher(rankName);
+        if (m.matches()) {
+            baseName = m.group(1);
+            maxRank = m.group(2).equals("II") ? (short) 2 : (short) 3;
+        }
+
+        int marked = 0;
+        for (short rank = 1; rank <= maxRank; rank++) {
+            short currentRank = rank;
+            String lookupName = baseName;
+            SpellEntity spellEntity = spellRepo
+                    .findByNameAndRankAndCharacterClassAndServerType(lookupName, rank, character.getCharacterClass(), serverType)
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Spell not found in catalog: " + lookupName + " rank " + currentRank));
+
+            CharacterSpellEntity progress = characterSpellRepo.findByCharacter_IdAndSpell_Id(character.getId(), spellEntity.getId())
+                    .orElseGet(() -> {
+                        CharacterSpellEntity created = new CharacterSpellEntity();
+                        created.setCharacter(character);
+                        created.setSpell(spellEntity);
+                        return created;
+                    });
+            progress.setScribed(true);
+            characterSpellRepo.save(progress);
+            marked++;
+        }
+        return marked;
+    }
+
+    // Lucy_Data (the catalog source) never has colons in spell names, but the live-game
+    // exporter does -- strip them so the catalog lookup still matches.
+    private String normalizeSpellName(String name) {
+        return name.replace(":", "").replaceAll(" {2,}", " ").trim();
     }
 
     private int nvl(Integer value) {

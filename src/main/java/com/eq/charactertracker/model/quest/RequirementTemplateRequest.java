@@ -8,4 +8,5 @@ public class RequirementTemplateRequest {
     private RequirementType type;
     private String description;
     private Long externalItemId;
+    private String phrase;
 }

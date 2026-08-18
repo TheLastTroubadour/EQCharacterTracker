@@ -1,8 +1,6 @@
 package com.eq.charactertracker.controller;
 
 import com.eq.charactertracker.model.CharacterDTO;
-import com.eq.charactertracker.model.CharacterEquipSlotDTO;
-import com.eq.charactertracker.service.CharacterEquipSlotService;
 import com.eq.charactertracker.service.CharacterService;
 import com.eq.charactertracker.service.THFItemService;
 import com.eq.charactertracker.service.UserService;
@@ -27,7 +25,6 @@ public class CharacterController {
 
     private final CharacterService characterService;
     private final THFItemService thfItemService;
-    private final CharacterEquipSlotService equipSlotService;
     private final UserService userService;
 
     @ResponseStatus(HttpStatus.CREATED)
@@ -66,13 +63,6 @@ public class CharacterController {
     @GetMapping
     public List<CharacterDTO> getAllCharacters() {
         return characterService.getAllCharacters();
-    }
-
-    @ResponseStatus(HttpStatus.OK)
-    @GetMapping("{characterId}/server/{serverName}/equipped-armor")
-    public List<CharacterEquipSlotDTO> getCharacterArmor(@PathVariable Long characterId,
-                                                       @PathVariable String serverName) {
-        return equipSlotService.findCharacterEquipSlotEntitiesByCharacterIdAndCharacterServer(characterId, serverName);
     }
 
     @ResponseStatus(HttpStatus.OK)

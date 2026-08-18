@@ -25,16 +25,21 @@ public class CharacterService extends BaseServiceImpl<CharacterEntity, Character
     private final ServerService serverService;
     private final ICharacterInformationService characterInformationService;
     private final CharacterInformationFactory characterInformationFactory;
+    private final CharacterSpellService characterSpellService;
+    private final QuestProgressService questProgressService;
 
     public CharacterService(ModelMapper modelMapper, CharacterRepo characterRepo, UserService userService,
                              ServerService serverService, ICharacterInformationService characterInformationService,
-                             CharacterInformationFactory characterInformationFactory) {
+                             CharacterInformationFactory characterInformationFactory,
+                             CharacterSpellService characterSpellService, QuestProgressService questProgressService) {
         super(modelMapper, characterRepo);
         this.characterRepo = characterRepo;
         this.userService = userService;
         this.serverService = serverService;
         this.characterInformationService = characterInformationService;
         this.characterInformationFactory = characterInformationFactory;
+        this.characterSpellService = characterSpellService;
+        this.questProgressService = questProgressService;
     }
 
     public CharacterDTO createCharacter(CharacterDTO character) {
@@ -49,6 +54,8 @@ public class CharacterService extends BaseServiceImpl<CharacterEntity, Character
         characterEntity.setServer(server);
         characterEntity.setUser(userEntity);
         characterEntity = characterRepo.save(characterEntity);
+        characterSpellService.seedSpellsForCharacter(characterEntity);
+        questProgressService.seedQuestsForCharacter(characterEntity);
         return entityToDTO(characterEntity);
     }
 

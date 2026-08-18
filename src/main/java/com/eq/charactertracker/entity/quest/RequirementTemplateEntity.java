@@ -33,6 +33,8 @@ public class RequirementTemplateEntity {
 
     private Long externalItemId;
 
+    private String phrase;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sub_quest_template_id", nullable = false)
     private SubQuestTemplateEntity subQuestTemplate;

@@ -2,6 +2,7 @@ package com.eq.charactertracker.controller;
 
 import com.eq.charactertracker.model.quest.CharacterQuestProgressResponse;
 import com.eq.charactertracker.model.quest.RequirementProgressResponse;
+import com.eq.charactertracker.model.quest.TeamQuestProgressResponse;
 import com.eq.charactertracker.service.QuestProgressService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -37,11 +38,31 @@ public class QuestProgressController {
         return questProgressService.getQuestProgressForCharacter(characterId);
     }
 
+    @GetMapping("/user/{userId}")
+    @ResponseStatus(HttpStatus.OK)
+    public List<TeamQuestProgressResponse> getQuestProgressForUser(@PathVariable Long userId) {
+        return questProgressService.getQuestProgressForUser(userId);
+    }
+
+    @GetMapping("/character/{characterId}/epic-status")
+    @ResponseStatus(HttpStatus.OK)
+    public boolean getEpicQuestStatus(@PathVariable Long characterId) {
+        return questProgressService.isEpicQuestCompleted(characterId);
+    }
+
     @PatchMapping("/{progressId}/requirement/{requirementProgressId}")
     @ResponseStatus(HttpStatus.OK)
     public RequirementProgressResponse toggleRequirement(
             @PathVariable Long progressId,
             @PathVariable Long requirementProgressId) {
         return questProgressService.toggleRequirement(progressId, requirementProgressId);
+    }
+
+    @PatchMapping("/{progressId}/complete")
+    @ResponseStatus(HttpStatus.OK)
+    public CharacterQuestProgressResponse setQuestCompletion(
+            @PathVariable Long progressId,
+            @RequestParam(name = "completed", defaultValue = "true") boolean completed) {
+        return questProgressService.setQuestCompletion(progressId, completed);
     }
 }

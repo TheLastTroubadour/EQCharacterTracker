@@ -11,6 +11,7 @@ public class ImportResult {
     private String server;
     private int equippedImported;
     private int inventoryImported;
+    private int spellsImported;
     private List<String> skipped = new ArrayList<>();
 
     public void addSkipped(String message) {

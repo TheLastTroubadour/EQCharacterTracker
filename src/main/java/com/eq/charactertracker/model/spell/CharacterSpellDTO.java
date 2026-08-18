@@ -1,15 +1,13 @@
 package com.eq.charactertracker.model.spell;
 
+import com.eq.charactertracker.model.CharacterDTO;
 import lombok.Data;
 
 @Data
 public class CharacterSpellDTO {
-    private Long spellId;
-    private Long characterSpellId;
-    private String name;
-    private short rank;
-    private short level;
-    private Integer manaCost;
-    private String description;
+    private Long id;
+    private CharacterDTO character;
+    private SpellDTO spell;
     private boolean scribed;
+
 }

@@ -14,6 +14,7 @@ public class SpellDTO {
     private ServerType serverType;
     private short level;
     private Integer manaCost;
+    private Integer enduranceCost;
     private String description;
     private ExpansionDTO expansion;
 }

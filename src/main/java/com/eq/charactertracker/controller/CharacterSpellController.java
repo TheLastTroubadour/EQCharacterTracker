@@ -27,11 +27,19 @@ public class CharacterSpellController {
         return characterSpellService.getSpellsForCharacter(characterId);
     }
 
-    @PostMapping("/characterSpell/{id}")
+    @PostMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     public CharacterSpellDTO update(
             @PathVariable Long id,
             @RequestBody CharacterSpellDTO characterSpellDTO) {
         return characterSpellService.update(characterSpellDTO, id);
+    }
+
+    @GetMapping("/user/{userId}/missing-spells")
+    @ResponseStatus(HttpStatus.OK)
+    public List<CharacterSpellDTO> getMissingSpells(
+            @PathVariable Long userId
+    ){
+        return characterSpellService.getMissingSpells(userId);
     }
 }

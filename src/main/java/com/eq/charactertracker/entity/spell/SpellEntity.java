@@ -46,6 +46,8 @@ public class SpellEntity implements BaseEntity {
 
     private Integer manaCost;
 
+    private Integer enduranceCost;
+
     private String description;
 
     @ManyToOne(fetch = FetchType.EAGER)

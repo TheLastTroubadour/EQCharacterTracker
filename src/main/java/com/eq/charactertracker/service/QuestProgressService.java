@@ -1,5 +1,6 @@
 package com.eq.charactertracker.service;
 
+import com.eq.charactertracker.constants.QuestType;
 import com.eq.charactertracker.entity.CharacterEntity;
 import com.eq.charactertracker.entity.quest.CharacterQuestProgressEntity;
 import com.eq.charactertracker.entity.quest.QuestTemplateEntity;
@@ -7,8 +8,10 @@ import com.eq.charactertracker.entity.quest.RequirementProgressEntity;
 import com.eq.charactertracker.entity.quest.RequirementTemplateEntity;
 import com.eq.charactertracker.entity.quest.SubQuestTemplateEntity;
 import com.eq.charactertracker.model.quest.CharacterQuestProgressResponse;
+import com.eq.charactertracker.model.quest.QuestCompletionResponse;
 import com.eq.charactertracker.model.quest.RequirementProgressResponse;
 import com.eq.charactertracker.model.quest.SubQuestProgressResponse;
+import com.eq.charactertracker.model.quest.TeamQuestProgressResponse;
 import com.eq.charactertracker.repo.CharacterRepo;
 import com.eq.charactertracker.repo.quest.CharacterQuestProgressRepo;
 import com.eq.charactertracker.repo.quest.QuestTemplateRepo;
@@ -17,8 +20,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 // TODO: rename *Response classes to *DTO and consider wiring to BaseServiceImpl pattern
@@ -43,6 +48,58 @@ public class QuestProgressService {
         QuestTemplateEntity template = questTemplateRepo.findById(questTemplateId)
                 .orElseThrow(() -> new IllegalArgumentException("Quest template not found: " + questTemplateId));
 
+        return toResponse(createProgress(character, template));
+    }
+
+    // PROGRESSION quests apply to every class -- they're stored with a null
+    // characterClass, not scoped to one, unlike EPIC which is always class-specific.
+    // Both auto-start for every matching character/server -- no manual "start quest"
+    // step needed, mirroring how spells are seeded on character creation. Idempotent:
+    // for a template the character hasn't started, creates the whole progress record;
+    // for one they already have, tops up any requirements added to the template since
+    // they started (so a step added after the fact is actually toggleable, not just
+    // visible-but-unchecked).
+    @Transactional
+    public void seedQuestsForCharacter(CharacterEntity character) {
+        List<QuestTemplateEntity> templates = new ArrayList<>();
+        templates.addAll(questTemplateRepo.findByServerTypeAndQuestTypeAndCharacterClassIsNull(
+                character.getServer().getType(), QuestType.PROGRESSION));
+        templates.addAll(questTemplateRepo.findByServerTypeAndCharacterClassAndQuestType(
+                character.getServer().getType(), character.getCharacterClass(), QuestType.EPIC));
+
+        for (QuestTemplateEntity template : templates) {
+            characterQuestProgressRepo.findByCharacter_IdAndQuestTemplate_Id(character.getId(), template.getId())
+                    .ifPresentOrElse(
+                            progress -> fillMissingRequirementProgress(progress, template),
+                            () -> createProgress(character, template));
+        }
+    }
+
+    private void fillMissingRequirementProgress(CharacterQuestProgressEntity progress, QuestTemplateEntity template) {
+        Set<Long> existingRequirementTemplateIds = progress.getRequirementProgress().stream()
+                .map(rp -> rp.getRequirementTemplate().getId())
+                .collect(Collectors.toSet());
+
+        boolean added = false;
+        for (SubQuestTemplateEntity subQuest : template.getSubQuests()) {
+            for (RequirementTemplateEntity requirement : subQuest.getRequirements()) {
+                if (existingRequirementTemplateIds.contains(requirement.getId())) {
+                    continue;
+                }
+                RequirementProgressEntity reqProgress = new RequirementProgressEntity();
+                reqProgress.setCharacterQuestProgress(progress);
+                reqProgress.setRequirementTemplate(requirement);
+                reqProgress.setCompleted(false);
+                progress.getRequirementProgress().add(reqProgress);
+                added = true;
+            }
+        }
+        if (added) {
+            characterQuestProgressRepo.save(progress);
+        }
+    }
+
+    private CharacterQuestProgressEntity createProgress(CharacterEntity character, QuestTemplateEntity template) {
         CharacterQuestProgressEntity progress = new CharacterQuestProgressEntity();
         progress.setCharacter(character);
         progress.setQuestTemplate(template);
@@ -57,7 +114,23 @@ public class QuestProgressService {
             }
         }
 
-        return toResponse(characterQuestProgressRepo.save(progress));
+        return characterQuestProgressRepo.save(progress);
+    }
+
+    // Bulk-sets every requirement under a quest (all subquests included) to the same
+    // completed state in one call, e.g. for "I already did this before I started
+    // tracking it" -- pass completed=false to reset the whole quest instead.
+    @Transactional
+    public CharacterQuestProgressResponse setQuestCompletion(Long progressId, boolean completed) {
+        CharacterQuestProgressEntity progress = characterQuestProgressRepo.findById(progressId)
+                .orElseThrow(() -> new IllegalArgumentException("Quest progress not found: " + progressId));
+
+        for (RequirementProgressEntity reqProgress : progress.getRequirementProgress()) {
+            reqProgress.setCompleted(completed);
+        }
+        progress = characterQuestProgressRepo.save(progress);
+
+        return toResponse(progress);
     }
 
     @Transactional
@@ -78,15 +151,73 @@ public class QuestProgressService {
         response.setType(reqProgress.getRequirementTemplate().getType());
         response.setDescription(reqProgress.getRequirementTemplate().getDescription());
         response.setExternalItemId(reqProgress.getRequirementTemplate().getExternalItemId());
+        response.setPhrase(reqProgress.getRequirementTemplate().getPhrase());
         response.setCompleted(reqProgress.isCompleted());
         return response;
     }
 
+    // Self-heals on every read: catches up a character whose progress is missing or
+    // stale (never seeded, or a PROGRESSION/EPIC template was added after they were
+    // created) before returning anything. Idempotent, so calling it from every read
+    // path below is safe -- no separate backfill script needed.
     public List<CharacterQuestProgressResponse> getQuestProgressForCharacter(Long characterId) {
+        CharacterEntity character = characterRepo.findById(characterId)
+                .orElseThrow(() -> new IllegalArgumentException("Character not found: " + characterId));
+        seedQuestsForCharacter(character);
+
         return characterQuestProgressRepo.findByCharacter_Id(characterId)
                 .stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    // A class can have more than one EPIC-type template (e.g. Epic 1.5 and Epic 2.0 are
+    // separate quest chains) -- "completed" means all of them are done for that class,
+    // not just one. Not started and in-progress both read as "not completed".
+    public boolean isEpicQuestCompleted(Long characterId) {
+        CharacterEntity character = characterRepo.findById(characterId)
+                .orElseThrow(() -> new IllegalArgumentException("Character not found: " + characterId));
+        seedQuestsForCharacter(character);
+
+        List<QuestTemplateEntity> epicTemplates = questTemplateRepo.findByServerTypeAndCharacterClassAndQuestType(
+                character.getServer().getType(), character.getCharacterClass(), QuestType.EPIC);
+
+        if (epicTemplates.isEmpty()) {
+            return false;
+        }
+
+        return epicTemplates.stream().allMatch(template ->
+                characterQuestProgressRepo.findByCharacter_IdAndQuestTemplate_Id(characterId, template.getId())
+                        .map(progress -> toResponse(progress).isCompleted())
+                        .orElse(false));
+    }
+
+    public List<TeamQuestProgressResponse> getQuestProgressForUser(Long userId) {
+        return characterRepo.findCharacterEntitiesByUserId(userId).stream()
+                .map(character -> {
+                    seedQuestsForCharacter(character);
+
+                    TeamQuestProgressResponse teamResponse = new TeamQuestProgressResponse();
+                    teamResponse.setCharacterId(character.getId());
+                    teamResponse.setCharacterName(character.getName());
+                    teamResponse.setCharacterClass(character.getCharacterClass());
+                    teamResponse.setEpicQuestCompleted(isEpicQuestCompleted(character.getId()));
+                    teamResponse.setQuests(getQuestCompletionForCharacter(character.getId()));
+                    return teamResponse;
+                }).toList();
+    }
+
+    private List<QuestCompletionResponse> getQuestCompletionForCharacter(Long characterId) {
+        return characterQuestProgressRepo.findByCharacter_Id(characterId).stream()
+                .map(progress -> {
+                    QuestCompletionResponse completion = new QuestCompletionResponse();
+                    completion.setProgressId(progress.getId());
+                    completion.setQuestTemplateId(progress.getQuestTemplate().getId());
+                    completion.setQuestName(progress.getQuestTemplate().getName());
+                    completion.setQuestType(progress.getQuestTemplate().getQuestType());
+                    completion.setCompleted(toResponse(progress).isCompleted());
+                    return completion;
+                }).toList();
     }
 
     private CharacterQuestProgressResponse toResponse(CharacterQuestProgressEntity progress) {
@@ -112,6 +243,7 @@ public class QuestProgressService {
                                 r.setType(req.getType());
                                 r.setDescription(req.getDescription());
                                 r.setExternalItemId(req.getExternalItemId());
+                                r.setPhrase(req.getPhrase());
                                 r.setCompleted(completionByRequirementTemplateId.getOrDefault(req.getId(), false));
                                 return r;
                             }).toList();

@@ -10,5 +10,6 @@ public class RequirementProgressResponse {
     private RequirementType type;
     private String description;
     private Long externalItemId;
+    private String phrase;
     private boolean completed;
 }

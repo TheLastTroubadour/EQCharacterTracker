@@ -39,6 +39,7 @@ public class SpellService extends BaseServiceImpl<SpellEntity, SpellDTO> {
         spell.setServerType(request.getServerType());
         spell.setLevel(request.getLevel());
         spell.setManaCost(request.getManaCost());
+        spell.setEnduranceCost(request.getEnduranceCost());
         spell.setDescription(request.getDescription());
 
         if (request.getExpansionShortName() != null) {

@@ -2,6 +2,7 @@ package com.eq.charactertracker.entity.quest;
 
 import com.eq.charactertracker.base.BaseEntity;
 import com.eq.charactertracker.constants.CharacterClass;
+import com.eq.charactertracker.constants.QuestType;
 import com.eq.charactertracker.constants.ServerType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -45,7 +46,8 @@ public class QuestTemplateEntity implements BaseEntity {
 
     private boolean ordered;
 
-    private boolean progressionQuest;
+    @Enumerated(EnumType.STRING)
+    private QuestType questType;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "expansion_id")

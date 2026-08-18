@@ -12,6 +12,7 @@ public class SpellRequest {
     private ServerType serverType;
     private short level;
     private Integer manaCost;
+    private Integer enduranceCost;
     private String description;
     private String expansionShortName;
 }
