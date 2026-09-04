@@ -19,7 +19,7 @@ public class CharacterDTO implements Serializable {
     private String name;
 
     @NotNull
-    private String server;
+    private ServerDTO server;
 
     @NotNull
     private CharacterClass characterClass;

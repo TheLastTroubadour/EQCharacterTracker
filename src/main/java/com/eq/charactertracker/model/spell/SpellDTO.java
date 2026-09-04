@@ -2,6 +2,7 @@ package com.eq.charactertracker.model.spell;
 
 import com.eq.charactertracker.constants.CharacterClass;
 import com.eq.charactertracker.constants.ServerType;
+import com.eq.charactertracker.constants.spell.SpellUnlockType;
 import com.eq.charactertracker.model.quest.ExpansionDTO;
 import lombok.Data;
 
@@ -17,4 +18,7 @@ public class SpellDTO {
     private Integer enduranceCost;
     private String description;
     private ExpansionDTO expansion;
+    private SpellUnlockType unlockType;
+    private String runeName;
+    private Integer runeTurnInOrder;
 }

@@ -3,14 +3,16 @@ package com.eq.charactertracker.service;
 import com.eq.charactertracker.base.BaseServiceImpl;
 import com.eq.charactertracker.entity.CharacterEntity;
 import com.eq.charactertracker.entity.ServerEntity;
-import com.eq.charactertracker.entity.UserEntity;
 import com.eq.charactertracker.exception.CharacterAlreadyExistsException;
 import com.eq.charactertracker.factory.CharacterInformationFactory;
 import com.eq.charactertracker.model.CharacterDTO;
+import com.eq.charactertracker.model.ServerDTO;
+import com.eq.charactertracker.model.UserDTO;
 import com.eq.charactertracker.repo.CharacterRepo;
 import com.eq.charactertracker.service.shared.ICharacterInformationService;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -31,7 +33,7 @@ public class CharacterService extends BaseServiceImpl<CharacterEntity, Character
     public CharacterService(ModelMapper modelMapper, CharacterRepo characterRepo, UserService userService,
                              ServerService serverService, ICharacterInformationService characterInformationService,
                              CharacterInformationFactory characterInformationFactory,
-                             CharacterSpellService characterSpellService, QuestProgressService questProgressService) {
+                             CharacterSpellService characterSpellService, @Lazy QuestProgressService questProgressService) {
         super(modelMapper, characterRepo);
         this.characterRepo = characterRepo;
         this.userService = userService;
@@ -43,19 +45,24 @@ public class CharacterService extends BaseServiceImpl<CharacterEntity, Character
     }
 
     public CharacterDTO createCharacter(CharacterDTO character) {
-        UserEntity userEntity = userService.getAuthenticatedUser();
-        ServerEntity server = serverService.findByShortName(character.getServer());
-        CharacterEntity characterEntity = characterRepo.findCharacterEntityByUserIdAndNameAndServer(
-                userEntity.getId(), character.getName(), server);
-        if (characterEntity != null) {
+        UserDTO user = userService.getAuthenticatedUser();
+        ServerDTO server = serverService.findByName(character.getServer().getName());
+        CharacterDTO check = findCharacterByUserIdAndNameAndServer(user.getId(), character.getName(), server);
+        if (check != null) {
             throw new CharacterAlreadyExistsException(character);
         }
-        characterEntity = dtoToEntity(character);
-        characterEntity.setServer(server);
-        characterEntity.setUser(userEntity);
-        characterEntity = characterRepo.save(characterEntity);
-        characterSpellService.seedSpellsForCharacter(characterEntity);
-        questProgressService.seedQuestsForCharacter(characterEntity);
+
+        character.setServer(server);
+        character.setUser(user);
+        character = create(character);
+        characterSpellService.seedSpellsForCharacter(character);
+        questProgressService.seedQuestsForCharacter(character);
+        return character;
+    }
+
+    public CharacterDTO findCharacterByUserIdAndNameAndServer(Long userId, String name, ServerDTO server){
+        CharacterEntity characterEntity = characterRepo.findCharacterEntityByUserIdAndNameAndServer(
+                userId, name, getModelMapper().map(server, ServerEntity.class));
         return entityToDTO(characterEntity);
     }
 
@@ -80,16 +87,16 @@ public class CharacterService extends BaseServiceImpl<CharacterEntity, Character
     }
 
     public List<CharacterDTO> refreshCharacters(String serverShortName) {
-        UserEntity user = userService.getAuthenticatedUser();
+        UserDTO user = userService.getAuthenticatedUser();
         List<CharacterDTO> characters = serverShortName != null
-                ? getCharacterByUserIdAndServer(user.getId(), serverService.findByShortName(serverShortName))
+                ? getCharacterByUserIdAndServer(user.getId(), serverService.findByName(serverShortName))
                 : getCharactersByUserId(user.getId());
         characterInformationService.updateExternalArmorDetailsForAllCharacters(characters);
         return characters;
     }
 
     public List<CharacterDTO> createCharactersByServerAndGuildName(String serverShortName, String guild) {
-        UserEntity user = userService.getAuthenticatedUser();
+        UserDTO user = userService.getAuthenticatedUser();
         ICharacterInformationService service = characterInformationFactory.getInstance(serverShortName);
         return service.createAllCharactersByGuildName(user.getId(), guild);
     }
@@ -99,8 +106,8 @@ public class CharacterService extends BaseServiceImpl<CharacterEntity, Character
         return characterEntityList.stream().map(this::entityToDTO).toList();
     }
 
-    private List<CharacterDTO> getCharacterByUserIdAndServer(Long userId, ServerEntity server) {
-        List<CharacterEntity> characterEntityList = characterRepo.findCharacterEntitiesByUserIdAndServer(userId, server);
+    private List<CharacterDTO> getCharacterByUserIdAndServer(Long userId, ServerDTO server) {
+        List<CharacterEntity> characterEntityList = characterRepo.findCharacterEntitiesByUserIdAndServer(userId, getModelMapper().map(server, ServerEntity.class));
         return characterEntityList.stream().map(this::entityToDTO).toList();
     }
 }

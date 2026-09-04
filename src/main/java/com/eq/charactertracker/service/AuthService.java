@@ -1,6 +1,7 @@
 package com.eq.charactertracker.service;
 
 import com.eq.charactertracker.entity.UserEntity;
+import com.eq.charactertracker.model.UserDTO;
 import com.eq.charactertracker.model.auth.AuthResponse;
 import com.eq.charactertracker.model.auth.LoginRequest;
 import com.eq.charactertracker.model.auth.RegisterRequest;
@@ -18,7 +19,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
 
     public AuthResponse register(RegisterRequest request) {
-        UserEntity user = userService.createUser(request.getUsername(), request.getEmail(), request.getPassword());
+        UserDTO user = userService.createUser(request.getUsername(), request.getEmail(), request.getPassword());
         String token = jwtService.generateToken(user);
         return new AuthResponse(token);
     }

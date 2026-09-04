@@ -1,0 +1,2 @@
+ALTER TABLE zones
+    ADD COLUMN short_name VARCHAR(255) NULL;

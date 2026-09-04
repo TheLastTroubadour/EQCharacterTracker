@@ -105,7 +105,7 @@ public abstract class BaseCharacterInformationService implements ICharacterInfor
         Long itemExtId = webItemInformation.getItemExtId();
         ArmorDTO armor = ArmorDTO.builder()
                 .name(itemName)
-                .server(character.getServer())
+                .server(character.getServer().getName())
                 .extId(itemExtId)
                 .build();
         return saveArmor(armor, doc, slotEnum);
@@ -115,7 +115,7 @@ public abstract class BaseCharacterInformationService implements ICharacterInfor
         log.info(String.format("Getting information on Armor: %s", itemName));
         String itemUrl = webItemInformation.getItemUrl();
         Long itemExtId = webItemInformation.getItemExtId();
-        String server = character.getServer();
+        String server = character.getServer().getName();
         return armorService.findArmorEntityByExtIdAndServer(itemExtId, server);
     }
 

@@ -10,9 +10,11 @@ import com.eq.charactertracker.entity.CharacterEquipSlotEntity;
 import com.eq.charactertracker.entity.CharacterInventoryEntity;
 import com.eq.charactertracker.entity.ItemEntity;
 import com.eq.charactertracker.entity.ServerEntity;
-import com.eq.charactertracker.entity.UserEntity;
 import com.eq.charactertracker.entity.spell.CharacterSpellEntity;
 import com.eq.charactertracker.entity.spell.SpellEntity;
+import com.eq.charactertracker.model.CharacterDTO;
+import com.eq.charactertracker.model.ServerDTO;
+import com.eq.charactertracker.model.UserDTO;
 import com.eq.charactertracker.model.imports.AugmentationImport;
 import com.eq.charactertracker.model.imports.CharacterImportInfo;
 import com.eq.charactertracker.model.imports.CharacterImportRequest;
@@ -30,6 +32,7 @@ import com.eq.charactertracker.repo.spell.CharacterSpellRepo;
 import com.eq.charactertracker.repo.spell.SpellRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,18 +46,30 @@ import java.util.regex.Pattern;
 @Slf4j
 public class ImportService {
 
-    private static final Pattern RANK_SUFFIX_PATTERN = Pattern.compile("^(.*) Rk\\. (II|III)$");
+    // The live-game exporter isn't consistent about the space after "Rk." (seen both
+    // "Rk. III" and "Rk.III"), so it's optional here.
+    private static final Pattern RANK_SUFFIX_PATTERN = Pattern.compile("^(.*) Rk\\.\\s*(II|III)$");
 
     private final UserService userService;
     private final ServerService serverService;
+    // TODO: route through CharacterService instead of calling CharacterRepo directly
     private final CharacterRepo characterRepo;
+    // TODO: route through ArmorService instead of calling ArmorRepo directly
     private final ArmorRepo armorRepo;
+    // TODO: no AugmentationService exists yet -- calling AugmentationRepo directly
     private final AugmentationRepo augmentationRepo;
+    // TODO: route through CharacterEquipSlotService instead of calling EquipSlotRepo directly
     private final EquipSlotRepo equipSlotRepo;
+    // TODO: no ItemService exists yet -- calling ItemRepo directly
     private final ItemRepo itemRepo;
+    // TODO: no CharacterInventoryService exists yet -- calling CharacterInventoryRepo directly
     private final CharacterInventoryRepo characterInventoryRepo;
+    // TODO: route through SpellService instead of calling SpellRepo directly
     private final SpellRepo spellRepo;
+    // TODO: route through CharacterSpellService instead of calling CharacterSpellRepo directly
     private final CharacterSpellRepo characterSpellRepo;
+    private final CharacterService characterService;
+    private final ModelMapper modelMapper;
 
     @Transactional
     public List<ImportResult> importCharacters(List<CharacterImportRequest> requests) {
@@ -66,10 +81,12 @@ public class ImportService {
     }
 
     private ImportResult importCharacter(CharacterImportRequest request) {
-        UserEntity user = userService.getAuthenticatedUser();
-        ServerEntity server = serverService.findByShortName(request.getCharacter().getServer());
+        UserDTO user = userService.getAuthenticatedUser();
+        ServerDTO serverDTO = serverService.findByName(request.getCharacter().getServer());
+        ServerEntity server = modelMapper.map(serverDTO, ServerEntity.class);
 
-        CharacterEntity character = upsertCharacter(request.getCharacter(), server, user);
+        CharacterDTO characterDTO = upsertCharacter(request.getCharacter(), serverDTO, user);
+        CharacterEntity character = modelMapper.map(characterDTO, CharacterEntity.class);
         clearCharacterData(character, server);
 
         ImportResult result = new ImportResult();
@@ -134,11 +151,10 @@ public class ImportService {
         }
     }
 
-    private CharacterEntity upsertCharacter(CharacterImportInfo info, ServerEntity server, UserEntity user) {
-        CharacterEntity character = characterRepo.findCharacterEntityByUserIdAndNameAndServer(
-                user.getId(), info.getName(), server);
+    private CharacterDTO upsertCharacter(CharacterImportInfo info, ServerDTO server, UserDTO user) {
+        CharacterDTO character = characterService.findCharacterByUserIdAndNameAndServer(user.getId(), info.getName(), server);
         if (character == null) {
-            character = new CharacterEntity();
+            character = new CharacterDTO ();
             character.setName(info.getName());
             character.setServer(server);
             character.setUser(user);
@@ -147,7 +163,7 @@ public class ImportService {
         character.setLevel(info.getLevel());
         character.setAaSpent(info.getAaSpent());
         character.setAaAvailable(info.getAaAvailable());
-        return characterRepo.save(character);
+        return characterService.create(character);
     }
 
     private void processEquippedItem(EquippedItemImport item, CharacterEntity character, ServerEntity server) {

@@ -1,6 +1,5 @@
 package com.eq.charactertracker.base;
 
-import com.eq.charactertracker.constants.FocusEffect;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,8 +7,6 @@ import lombok.Setter;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.MappedSuperclass;
 import java.util.Collection;
 
@@ -110,9 +107,15 @@ public abstract class BaseAttributes {
     @Column(columnDefinition = "Double default 0", nullable = false)
     private Double strikethrough;
 
-    @ElementCollection(targetClass = FocusEffect.class)
-    @Enumerated(EnumType.STRING)
-    private Collection<FocusEffect> focusEffect;
+    // Effect names resolved from items.txt's worneffect/focuseffect spell ids via Lucy_Data --
+    // an open-ended, growing set (Ferocity I-X, etc.), not a fixed enum.
+    @ElementCollection
+    private Collection<String> focusEffect;
+
+    // Activatable click effects (items.txt's clickeffect), kept separate from focusEffect
+    // since these are player-triggered, not passive-while-worn.
+    @ElementCollection
+    private Collection<String> clickEffect;
 
     @Column(columnDefinition = "Integer default 0", nullable = false)
     private Integer heroicStrength;

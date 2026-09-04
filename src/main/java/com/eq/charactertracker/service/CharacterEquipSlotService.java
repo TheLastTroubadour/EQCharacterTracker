@@ -7,6 +7,7 @@ import com.eq.charactertracker.entity.CharacterEquipSlotEntity;
 import com.eq.charactertracker.entity.ServerEntity;
 import com.eq.charactertracker.model.CharacterDTO;
 import com.eq.charactertracker.model.CharacterEquipSlotDTO;
+import com.eq.charactertracker.model.ServerDTO;
 import com.eq.charactertracker.repo.EquipSlotRepo;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -37,8 +38,8 @@ public class CharacterEquipSlotService extends BaseServiceImpl<CharacterEquipSlo
         }
         List<CharacterEquipSlotEntity> entities;
         if (serverShortName != null) {
-            ServerEntity server = serverService.findByShortName(serverShortName);
-            entities = equipSlotRepo.findCharacterEquipSlotEntitiesByCharacter_CharacterClassAndEquipSlotAndServer(classes, slots, server);
+            ServerDTO server = serverService.findByName(serverShortName);
+            entities = equipSlotRepo.findCharacterEquipSlotEntitiesByCharacter_CharacterClassAndEquipSlotAndServer(classes, slots, getModelMapper().map(server, ServerEntity.class));
         } else {
             entities = equipSlotRepo.findCharacterEquipSlotEntitiesByCharacter_CharacterClassAndEquipSlot(classes, slots);
         }
@@ -55,8 +56,8 @@ public class CharacterEquipSlotService extends BaseServiceImpl<CharacterEquipSlo
     }
 
     public List<CharacterEquipSlotDTO> findCharacterEquipSlotEntitiesByCharacterIdAndCharacterServer(Long characterId, String serverShortName) {
-        ServerEntity server = serverService.findByShortName(serverShortName);
-        List<CharacterEquipSlotEntity> characterEquipSlotEntities = equipSlotRepo.findCharacterEquipSlotEntitiesByCharacter_IdAndCharacter_Server(characterId, server);
+        ServerDTO server = serverService.findByName(serverShortName);
+        List<CharacterEquipSlotEntity> characterEquipSlotEntities = equipSlotRepo.findCharacterEquipSlotEntitiesByCharacter_IdAndCharacter_Server(characterId, getModelMapper().map(server, ServerEntity.class));
         return characterEquipSlotEntities.stream().map(this::entityToDTO).toList();
     }
 

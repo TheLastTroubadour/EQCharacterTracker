@@ -7,16 +7,17 @@ import com.eq.charactertracker.entity.quest.QuestTemplateEntity;
 import com.eq.charactertracker.entity.quest.RequirementProgressEntity;
 import com.eq.charactertracker.entity.quest.RequirementTemplateEntity;
 import com.eq.charactertracker.entity.quest.SubQuestTemplateEntity;
+import com.eq.charactertracker.model.CharacterDTO;
 import com.eq.charactertracker.model.quest.CharacterQuestProgressResponse;
 import com.eq.charactertracker.model.quest.QuestCompletionResponse;
 import com.eq.charactertracker.model.quest.RequirementProgressResponse;
 import com.eq.charactertracker.model.quest.SubQuestProgressResponse;
 import com.eq.charactertracker.model.quest.TeamQuestProgressResponse;
-import com.eq.charactertracker.repo.CharacterRepo;
 import com.eq.charactertracker.repo.quest.CharacterQuestProgressRepo;
 import com.eq.charactertracker.repo.quest.QuestTemplateRepo;
 import com.eq.charactertracker.repo.quest.RequirementProgressRepo;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,10 +32,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class QuestProgressService {
 
+    private final ModelMapper modelMapper;
     private final CharacterQuestProgressRepo characterQuestProgressRepo;
     private final RequirementProgressRepo requirementProgressRepo;
+    // TODO: route through QuestTemplateService instead of calling QuestTemplateRepo directly
     private final QuestTemplateRepo questTemplateRepo;
-    private final CharacterRepo characterRepo;
+    private final CharacterService characterService;
 
     @Transactional
     public CharacterQuestProgressResponse startQuest(Long characterId, Long questTemplateId) {
@@ -42,8 +45,7 @@ public class QuestProgressService {
             throw new IllegalArgumentException("Quest already started for this character");
         }
 
-        CharacterEntity character = characterRepo.findById(characterId)
-                .orElseThrow(() -> new IllegalArgumentException("Character not found: " + characterId));
+        CharacterDTO character = characterService.getCharacterById(characterId);
 
         QuestTemplateEntity template = questTemplateRepo.findById(questTemplateId)
                 .orElseThrow(() -> new IllegalArgumentException("Quest template not found: " + questTemplateId));
@@ -60,7 +62,7 @@ public class QuestProgressService {
     // they started (so a step added after the fact is actually toggleable, not just
     // visible-but-unchecked).
     @Transactional
-    public void seedQuestsForCharacter(CharacterEntity character) {
+    public void seedQuestsForCharacter(CharacterDTO character) {
         List<QuestTemplateEntity> templates = new ArrayList<>();
         templates.addAll(questTemplateRepo.findByServerTypeAndQuestTypeAndCharacterClassIsNull(
                 character.getServer().getType(), QuestType.PROGRESSION));
@@ -99,9 +101,9 @@ public class QuestProgressService {
         }
     }
 
-    private CharacterQuestProgressEntity createProgress(CharacterEntity character, QuestTemplateEntity template) {
+    private CharacterQuestProgressEntity createProgress(CharacterDTO character, QuestTemplateEntity template) {
         CharacterQuestProgressEntity progress = new CharacterQuestProgressEntity();
-        progress.setCharacter(character);
+        progress.setCharacter(modelMapper.map(character, CharacterEntity.class));
         progress.setQuestTemplate(template);
 
         for (SubQuestTemplateEntity subQuest : template.getSubQuests()) {
@@ -161,8 +163,7 @@ public class QuestProgressService {
     // created) before returning anything. Idempotent, so calling it from every read
     // path below is safe -- no separate backfill script needed.
     public List<CharacterQuestProgressResponse> getQuestProgressForCharacter(Long characterId) {
-        CharacterEntity character = characterRepo.findById(characterId)
-                .orElseThrow(() -> new IllegalArgumentException("Character not found: " + characterId));
+        CharacterDTO character = characterService.getCharacterById(characterId);
         seedQuestsForCharacter(character);
 
         return characterQuestProgressRepo.findByCharacter_Id(characterId)
@@ -175,8 +176,7 @@ public class QuestProgressService {
     // separate quest chains) -- "completed" means all of them are done for that class,
     // not just one. Not started and in-progress both read as "not completed".
     public boolean isEpicQuestCompleted(Long characterId) {
-        CharacterEntity character = characterRepo.findById(characterId)
-                .orElseThrow(() -> new IllegalArgumentException("Character not found: " + characterId));
+        CharacterDTO character = characterService.getCharacterById(characterId);
         seedQuestsForCharacter(character);
 
         List<QuestTemplateEntity> epicTemplates = questTemplateRepo.findByServerTypeAndCharacterClassAndQuestType(
@@ -193,7 +193,7 @@ public class QuestProgressService {
     }
 
     public List<TeamQuestProgressResponse> getQuestProgressForUser(Long userId) {
-        return characterRepo.findCharacterEntitiesByUserId(userId).stream()
+        return characterService.getCharactersByUserId(userId).stream()
                 .map(character -> {
                     seedQuestsForCharacter(character);
 

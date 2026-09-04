@@ -14,6 +14,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
+
 @Entity
 @Table(name = "expansions", uniqueConstraints = @UniqueConstraint(columnNames = {"short_name", "server_type"}))
 @Getter
@@ -33,4 +35,6 @@ public class ExpansionEntity implements BaseEntity {
 
     @Enumerated(EnumType.STRING)
     private ServerType serverType;
+
+    private LocalDate releaseDate;
 }

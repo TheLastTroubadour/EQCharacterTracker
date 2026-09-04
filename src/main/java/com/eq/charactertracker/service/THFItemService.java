@@ -32,9 +32,12 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class THFItemService {
 
+    // TODO: route through CharacterService instead of calling CharacterRepo directly
     private final CharacterRepo characterRepo;
     private final ModelMapper modelMapper;
+    // TODO: no ItemService exists yet -- calling ItemRepo directly
     private final ItemRepo itemRepo;
+    // TODO: no CharacterInventoryService exists yet -- calling CharacterInventoryRepo directly
     private final CharacterInventoryRepo characterInventoryRepo;
     private final ServerService serverService;
 
@@ -56,7 +59,7 @@ public class THFItemService {
     }
 
     public CharacterDTO updateInventoryInformation(CharacterDTO character) {
-        ServerEntity server = serverService.findByShortName(character.getServer());
+        ServerEntity server = modelMapper.map(character.getServer(), ServerEntity.class);
         CharacterEntity characterEntity = characterRepo.findCharacterEntityByNameAndServer(character.getName(), server);
         updateInventoryInformation(characterEntity);
         return character;
@@ -110,7 +113,7 @@ public class THFItemService {
     }
 
     public ItemEntity createItemEntityFromExternalId(Long externalId) {
-        ServerEntity thfServer = serverService.findByShortName(THF_SHORT_NAME);
+        ServerEntity thfServer = modelMapper.map(serverService.findByName(THF_SHORT_NAME), ServerEntity.class);
         Document itemUrlDoc = null;
         try {
             itemUrlDoc = Jsoup.connect(ServerInformation.THF_ITEM_LOOKUP_URL + externalId).get();
@@ -142,7 +145,7 @@ public class THFItemService {
     }
 
     public ItemEntity createOrGetItemEntity(Long externalId, String serverShortName) {
-        ServerEntity server = serverService.findByShortName(serverShortName);
+        ServerEntity server = modelMapper.map(serverService.findByName(serverShortName), ServerEntity.class);
         Optional<ItemEntity> entity = itemRepo.findItemEntityByExternalIdAndServer(externalId, server);
         if (entity.isPresent()) {
             return entity.get();

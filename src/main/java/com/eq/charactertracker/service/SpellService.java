@@ -3,6 +3,7 @@ package com.eq.charactertracker.service;
 import com.eq.charactertracker.base.BaseServiceImpl;
 import com.eq.charactertracker.constants.CharacterClass;
 import com.eq.charactertracker.constants.ServerType;
+import com.eq.charactertracker.constants.spell.SpellUnlockType;
 import com.eq.charactertracker.entity.quest.ExpansionEntity;
 import com.eq.charactertracker.entity.spell.SpellEntity;
 import com.eq.charactertracker.model.spell.SpellRequest;
@@ -19,6 +20,7 @@ import java.util.List;
 public class SpellService extends BaseServiceImpl<SpellEntity, SpellDTO> {
 
     private final SpellRepo spellRepo;
+    // TODO: route through ExpansionService instead of calling ExpansionRepo directly
     private final ExpansionRepo expansionRepo;
 
     public SpellService(ModelMapper modelMapper, SpellRepo spellRepo, ExpansionRepo expansionRepo) {
@@ -41,6 +43,9 @@ public class SpellService extends BaseServiceImpl<SpellEntity, SpellDTO> {
         spell.setManaCost(request.getManaCost());
         spell.setEnduranceCost(request.getEnduranceCost());
         spell.setDescription(request.getDescription());
+        spell.setUnlockType(request.getUnlockType() != null ? request.getUnlockType() : SpellUnlockType.NONE);
+        spell.setRuneName(request.getRuneName());
+        spell.setRuneTurnInOrder(request.getRuneTurnInOrder());
 
         if (request.getExpansionShortName() != null) {
             ExpansionEntity expansion = expansionRepo

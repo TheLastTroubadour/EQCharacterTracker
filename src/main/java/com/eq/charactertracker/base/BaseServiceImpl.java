@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.reflect.ParameterizedType;
+import java.util.List;
 
 @Component
 @Getter
@@ -53,6 +54,14 @@ public abstract class BaseServiceImpl<E extends BaseEntity, T> implements BaseSe
 
     @Override
     @Transactional
+    public List<T> saveAll(List<T> tList){
+        List<E> eList = tList.stream().map(this::dtoToEntity).toList();
+        eList = baseRepo.saveAll(eList);
+        return (List<T>) eList.stream().map(this::entityToDTO).toList();
+    }
+
+    @Override
+    @Transactional
     public T update(T tObject, long id) {
         E entity = dtoToEntity(tObject);
         entity.setId(id);
@@ -68,6 +77,12 @@ public abstract class BaseServiceImpl<E extends BaseEntity, T> implements BaseSe
             return false;
         }
         return true;
+    }
+
+
+    @Override
+    public List<T> findAll(){
+        return baseRepo.findAll().stream().map(this::entityToDTO).toList();
     }
 
 }

@@ -33,10 +33,13 @@ public class UserService extends BaseServiceImpl<UserEntity, UserDTO> implements
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
     }
 
-    public UserEntity getAuthenticatedUser() {
+    public UserDTO getAuthenticatedUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepo.findByUsername(username)
+
+        UserEntity userEntity = userRepo.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+
+        return entityToDTO(userEntity);
     }
 
     public UserDTO getUserById(Long userId) {
@@ -47,12 +50,12 @@ public class UserService extends BaseServiceImpl<UserEntity, UserDTO> implements
         return userRepo.findAll().stream().map(this::entityToDTO).toList();
     }
 
-    public UserEntity createUser(String username, String email, String rawPassword) {
-        UserEntity userEntity = new UserEntity();
-        userEntity.setUsername(username);
-        userEntity.setEmail(email);
-        userEntity.setPassword(passwordEncoder.encode(rawPassword));
-        userEntity.setRole(Role.USER);
-        return userRepo.save(userEntity);
+    public UserDTO createUser(String username, String email, String rawPassword) {
+        UserDTO user = new UserDTO();
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(rawPassword));
+        user.setRole(Role.USER);
+        return super.create(user);
     }
 }

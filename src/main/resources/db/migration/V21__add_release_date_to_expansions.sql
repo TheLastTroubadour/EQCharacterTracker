@@ -1,0 +1,35 @@
+ALTER TABLE expansions
+    ADD COLUMN release_date DATE NULL;
+
+UPDATE expansions SET release_date = '1999-03-16' WHERE short_name = 'CLASSIC' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2000-04-24' WHERE short_name = 'KUN' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2000-12-05' WHERE short_name = 'SoV' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2001-12-04' WHERE short_name = 'LUC' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2002-10-29' WHERE short_name = 'POP' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2003-02-25' WHERE short_name = 'YKE' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2003-09-09' WHERE short_name = 'LDoN' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2004-02-10' WHERE short_name = 'GoD' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2004-09-14' WHERE short_name = 'OOW' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2005-02-15' WHERE short_name = 'DoN' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2005-09-13' WHERE short_name = 'DoDH' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2006-02-21' WHERE short_name = 'PoR' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2006-09-19' WHERE short_name = 'TSS' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2007-02-13' WHERE short_name = 'TBS' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2007-11-13' WHERE short_name = 'SoF' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2008-10-21' WHERE short_name = 'SoD' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2009-12-15' WHERE short_name = 'UF' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2010-10-12' WHERE short_name = 'HoT' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2011-11-15' WHERE short_name = 'VoA' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2012-11-28' WHERE short_name = 'RoF' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2013-10-08' WHERE short_name = 'CotF' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2014-10-28' WHERE short_name = 'TDS' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2015-11-18' WHERE short_name = 'TBM' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2016-11-16' WHERE short_name = 'EoK' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2017-12-12' WHERE short_name = 'RoS' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2018-12-11' WHERE short_name = 'TBL' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2019-12-18' WHERE short_name = 'ToV' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2020-12-08' WHERE short_name = 'CoV' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2021-12-07' WHERE short_name = 'ToL' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2022-12-06' WHERE short_name = 'NoS' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2023-12-05' WHERE short_name = 'LS' AND server_type = 'LIVE';
+UPDATE expansions SET release_date = '2024-12-03' WHERE short_name = 'TOB' AND server_type = 'LIVE';

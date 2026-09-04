@@ -1,34 +1,46 @@
 package com.eq.charactertracker.service;
 
+import com.eq.charactertracker.base.BaseServiceImpl;
 import com.eq.charactertracker.constants.ServerType;
 import com.eq.charactertracker.entity.ServerEntity;
+import com.eq.charactertracker.model.ServerDTO;
 import com.eq.charactertracker.repo.ServerRepo;
-import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 // TODO: migrate to BaseServiceImpl pattern (needs a ServerDTO first, see feedback_service_architecture memory)
 @Service
-@RequiredArgsConstructor
-public class ServerService {
+public class ServerService extends BaseServiceImpl<ServerEntity, ServerDTO> {
 
     private final ServerRepo serverRepo;
 
-    public ServerEntity findByShortName(String shortName) {
-        return serverRepo.findByShortName(shortName.toUpperCase())
-                .orElseThrow(() -> new IllegalArgumentException("Unknown server: " + shortName));
+    public ServerService(ModelMapper modelMapper, ServerRepo serverRepo) {
+        super(modelMapper, serverRepo);
+        this.serverRepo = serverRepo;
     }
 
-    public List<ServerEntity> findAll() {
-        return serverRepo.findAll();
+    @Deprecated(since = "Use findByName")
+    public Optional<ServerEntity> findByShortName(String shortName) {
+        return serverRepo.findByShortName(shortName.toUpperCase());
     }
 
-    public List<ServerEntity> findByType(ServerType type) {
-        return serverRepo.findByType(type);
+    public ServerDTO findByName(String serverName){
+        Optional<ServerEntity> server = serverRepo.findByShortName(serverName);
+        if(server.isPresent()){
+            return entityToDTO(server.get());
+        }
+        server = serverRepo.findByNameIgnoreCase(serverName);
+        if(server.isPresent()){
+            return entityToDTO(server.get());
+        }
+        throw new IllegalArgumentException("Unknown Server " + serverName);
     }
 
-    public ServerEntity save(ServerEntity server) {
-        return serverRepo.save(server);
+    public List<ServerDTO> findByType(ServerType type) {
+        return serverRepo.findByType(type).stream().map(this::entityToDTO).toList();
     }
+
 }

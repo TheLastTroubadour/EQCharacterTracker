@@ -9,7 +9,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -32,11 +34,24 @@ public class SpellController {
         return spellService.importSpells(requests);
     }
 
+    @PutMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasRole('ADMIN')")
+    public SpellDTO update(@PathVariable Long id, @RequestBody SpellDTO spell) {
+        return spellService.update(spell, id);
+    }
+
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public List<SpellDTO> getSpellsByServerTypeAndCharacterClass(
             @RequestParam(name = "serverType", required = false) ServerType serverType,
             @RequestParam(name = "characterClass", required = false) CharacterClass characterClass) {
         return spellService.getSpellsByServerTypeAndCharacterClass(serverType, characterClass);
+    }
+
+    @GetMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public SpellDTO getById(@PathVariable Long id) {
+        return spellService.getById(id);
     }
 }

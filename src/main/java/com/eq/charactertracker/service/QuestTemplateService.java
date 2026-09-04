@@ -28,7 +28,9 @@ import java.util.stream.Collectors;
 public class QuestTemplateService extends BaseServiceImpl<QuestTemplateEntity, QuestTemplateDTO> {
 
     private final QuestTemplateRepo questTemplateRepo;
+    // TODO: route through ExpansionService instead of calling ExpansionRepo directly
     private final ExpansionRepo expansionRepo;
+    // TODO: route through QuestProgressService instead of calling RequirementProgressRepo directly
     private final RequirementProgressRepo requirementProgressRepo;
 
     public QuestTemplateService(ModelMapper modelMapper, QuestTemplateRepo questTemplateRepo, ExpansionRepo expansionRepo,
