@@ -9,6 +9,7 @@ public class SpellImport {
     private Long externalId;
     private Short level;
     private Integer mana;
+    private Integer enduranceCost;
     private String name;
     private String rankName;
     private String subcategory;

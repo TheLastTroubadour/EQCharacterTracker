@@ -1,6 +1,7 @@
 package com.eq.charactertracker.config;
 
 import com.eq.charactertracker.config.modelmapper.ArmorEntityToArmorModelMap;
+import com.eq.charactertracker.config.modelmapper.AugmentationEntityToAugmentationModelMap;
 import com.eq.charactertracker.entity.CharacterEntity;
 import com.eq.charactertracker.entity.ItemEntity;
 import com.eq.charactertracker.model.CharacterDTO;
@@ -19,6 +20,7 @@ public class ApplicationConfig {
         modelMapper.getConfiguration().setFieldMatchingEnabled(true);
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
         modelMapper.addMappings(new ArmorEntityToArmorModelMap());
+        modelMapper.addMappings(new AugmentationEntityToAugmentationModelMap());
 
         modelMapper.typeMap(CharacterEntity.class, CharacterDTO.class)
                 .addMappings(m -> m.map(

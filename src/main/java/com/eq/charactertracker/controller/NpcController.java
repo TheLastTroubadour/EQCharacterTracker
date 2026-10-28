@@ -59,6 +59,13 @@ public class NpcController {
         return npcService.getById(id);
     }
 
+    @GetMapping("/needs-review")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<NpcDTO> getNpcsNeedingReview() {
+        return npcService.getNpcsNeedingReview();
+    }
+
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasRole('ADMIN')")
@@ -100,6 +107,27 @@ public class NpcController {
     @PreAuthorize("hasRole('ADMIN')")
     public NpcDTO removeDrop(@PathVariable Long npcId, @PathVariable Long armorId) {
         return npcService.removeDrop(npcId, armorId);
+    }
+
+    @PostMapping("/{npcId}/item-drops/{itemId}")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasRole('ADMIN')")
+    public NpcDTO addItemDrop(@PathVariable Long npcId, @PathVariable Long itemId) {
+        return npcService.addItemDrop(npcId, itemId);
+    }
+
+    @PostMapping("/{npcId}/item-drops")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasRole('ADMIN')")
+    public NpcDTO addItemDrops(@PathVariable Long npcId, @RequestBody List<Long> itemIds) {
+        return npcService.addItemDrops(npcId, itemIds);
+    }
+
+    @DeleteMapping("/{npcId}/item-drops/{itemId}")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasRole('ADMIN')")
+    public NpcDTO removeItemDrop(@PathVariable Long npcId, @PathVariable Long itemId) {
+        return npcService.removeItemDrop(npcId, itemId);
     }
 
     @PostMapping("/{npcAId}/link-tier/{npcBId}")

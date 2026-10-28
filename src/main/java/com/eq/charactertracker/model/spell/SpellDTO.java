@@ -21,4 +21,5 @@ public class SpellDTO {
     private SpellUnlockType unlockType;
     private String runeName;
     private Integer runeTurnInOrder;
+    private boolean needsReview;
 }

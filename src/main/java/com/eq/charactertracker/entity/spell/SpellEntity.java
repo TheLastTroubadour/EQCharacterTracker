@@ -67,4 +67,10 @@ public class SpellEntity implements BaseEntity {
 
     @Column(name = "rune_turn_in_order")
     private Integer runeTurnInOrder;
+
+    // Set true when this row was auto-created from a character import (name/rank/level/mana
+    // only) rather than fully curated -- description/expansion/unlock data still need a
+    // manual pass. Clear it via PUT /spell/{id} once that's done.
+    @Column(name = "needs_review", nullable = false)
+    private boolean needsReview = false;
 }

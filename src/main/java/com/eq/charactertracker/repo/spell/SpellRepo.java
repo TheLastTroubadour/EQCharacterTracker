@@ -14,4 +14,5 @@ public interface SpellRepo extends BaseRepo<SpellEntity, Long> {
     List<SpellEntity> findByServerType(ServerType serverType);
     List<SpellEntity> findByServerTypeAndCharacterClass(ServerType serverType, CharacterClass characterClass);
     Optional<SpellEntity> findByNameAndRankAndCharacterClassAndServerType(String name, short rank, CharacterClass characterClass, ServerType serverType);
+    List<SpellEntity> findByNeedsReviewTrue();
 }

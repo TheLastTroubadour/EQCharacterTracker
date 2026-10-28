@@ -1,6 +1,7 @@
 package com.eq.charactertracker.model;
 
 import com.eq.charactertracker.constants.Role;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,6 +21,10 @@ public class UserDTO implements UserDetails, Serializable {
     private Long id;
     private String username;
     private String email;
+    // Never serialized into API responses -- Spring Security still uses this internally via
+    // getPassword() (UserDetails), @JsonIgnore only affects Jackson (de)serialization at the
+    // HTTP boundary, not in-JVM access.
+    @JsonIgnore
     private String password;
     private Role role;
 

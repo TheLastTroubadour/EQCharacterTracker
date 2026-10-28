@@ -4,15 +4,18 @@ import com.eq.charactertracker.base.BaseEntity;
 import com.eq.charactertracker.base.BaseServiceImpl;
 import com.eq.charactertracker.constants.NpcTier;
 import com.eq.charactertracker.entity.ArmorEntity;
+import com.eq.charactertracker.entity.ItemEntity;
 import com.eq.charactertracker.entity.NpcEntity;
 import com.eq.charactertracker.entity.ZoneEntity;
 import com.eq.charactertracker.entity.quest.ExpansionEntity;
 import com.eq.charactertracker.model.ArmorDTO;
+import com.eq.charactertracker.model.Item;
 import com.eq.charactertracker.model.NpcCreateRequest;
 import com.eq.charactertracker.model.NpcDTO;
 import com.eq.charactertracker.model.ZoneDTO;
 import com.eq.charactertracker.repo.ArmorRepo;
 import com.eq.charactertracker.repo.BaseRepo;
+import com.eq.charactertracker.repo.ItemRepo;
 import com.eq.charactertracker.repo.NpcRepo;
 import com.eq.charactertracker.repo.ZoneRepo;
 import com.eq.charactertracker.repo.quest.ExpansionRepo;
@@ -25,6 +28,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class NpcService extends BaseServiceImpl<NpcEntity, NpcDTO> {
@@ -33,14 +37,17 @@ public class NpcService extends BaseServiceImpl<NpcEntity, NpcDTO> {
     private final ArmorRepo armorRepo;
     private final ZoneRepo zoneRepo;
     private final ExpansionRepo expansionRepo;
+    // TODO: no ItemService exists yet -- calling ItemRepo directly, matching THFItemService.
+    private final ItemRepo itemRepo;
 
     public NpcService(ModelMapper modelMapper, NpcRepo npcRepo, ArmorRepo armorRepo, ZoneRepo zoneRepo,
-                       ExpansionRepo expansionRepo) {
+                       ExpansionRepo expansionRepo, ItemRepo itemRepo) {
         super(modelMapper, npcRepo);
         this.npcRepo = npcRepo;
         this.armorRepo = armorRepo;
         this.zoneRepo = zoneRepo;
         this.expansionRepo = expansionRepo;
+        this.itemRepo = itemRepo;
     }
 
     // Requires at least one filter -- an unbounded "return every npc" query has no
@@ -74,6 +81,8 @@ public class NpcService extends BaseServiceImpl<NpcEntity, NpcDTO> {
         dto.setName(entity.getName());
         dto.setTier(entity.getTier());
         dto.setRandomLootTier(entity.getRandomLootTier());
+        dto.setNeedsReview(entity.isNeedsReview());
+        dto.setEncounter(entity.isEncounter());
         if (entity.getZones() != null) {
             dto.setZones(entity.getZones().stream()
                     .map(zone -> getModelMapper().map(zone, ZoneDTO.class))
@@ -84,11 +93,23 @@ public class NpcService extends BaseServiceImpl<NpcEntity, NpcDTO> {
                     .map(armor -> getModelMapper().map(armor, ArmorDTO.class))
                     .toList());
         }
+        if (entity.getItemDrops() != null) {
+            dto.setItemDrops(entity.getItemDrops().stream()
+                    .map(item -> getModelMapper().map(item, Item.class))
+                    .toList());
+        }
         return dto;
     }
 
     public List<NpcDTO> getByTier(Integer tier) {
         return npcRepo.findByRandomLootTier(tier).stream().map(this::entityToDTO).toList();
+    }
+
+    // The raid-import review queue -- npcs auto-created from Raids / "Conqueror of"
+    // achievement rows, which need a human to confirm they're real creatures (and not
+    // encounter/event step names) before they're trusted.
+    public List<NpcDTO> getNpcsNeedingReview() {
+        return npcRepo.findByNeedsReviewTrue().stream().map(this::entityToDTO).toList();
     }
 
     // Explicit id-resolution rather than routing through the generic inherited create()/update()
@@ -123,13 +144,34 @@ public class NpcService extends BaseServiceImpl<NpcEntity, NpcDTO> {
         if (request.getRandomLootTier() != null) {
             npc.setRandomLootTier(request.getRandomLootTier());
         }
+        if (request.getNeedsReview() != null) {
+            npc.setNeedsReview(request.getNeedsReview());
+        }
+        if (request.getEncounter() != null) {
+            npc.setEncounter(request.getEncounter());
+        }
         if (request.getZoneIds() != null) {
             npc.setZones(new HashSet<>(resolveByIds(zoneRepo, request.getZoneIds(), "zone")));
         }
         if (request.getArmorIds() != null) {
             npc.setDrops(new HashSet<>(resolveByIds(armorRepo, request.getArmorIds(), "armor")));
         }
+        if (request.getItemIds() != null) {
+            npc.setItemDrops(new HashSet<>(resolveItemsByIds(request.getItemIds())));
+        }
         return npc;
+    }
+
+    // ItemEntity doesn't implement BaseEntity/ItemRepo doesn't extend BaseRepo yet (see
+    // THFItemService TODOs), so it can't go through the generic resolveByIds below.
+    private List<ItemEntity> resolveItemsByIds(List<Long> ids) {
+        List<ItemEntity> found = itemRepo.findAllById(ids);
+        if (found.size() != ids.size()) {
+            Set<Long> foundIds = found.stream().map(ItemEntity::getId).collect(Collectors.toSet());
+            List<Long> missing = ids.stream().filter(id -> !foundIds.contains(id)).toList();
+            throw new IllegalArgumentException("Unknown item id(s): " + missing);
+        }
+        return found;
     }
 
     @Transactional
@@ -190,6 +232,20 @@ public class NpcService extends BaseServiceImpl<NpcEntity, NpcDTO> {
         return expansionIds.isEmpty() ? null : expansionIds.iterator().next();
     }
 
+    // Npcs with no resolvable expansion (no zones, or zones not yet matched to one) are
+    // ignored rather than blocking the link -- there's nothing to conflict with. Npcs whose
+    // expansion is known are compared, and any two known expansions differing rejects the link.
+    private void requireCompatibleExpansions(List<NpcEntity> aGroup, List<NpcEntity> bGroup) {
+        Set<Long> expansionIds = Stream.concat(aGroup.stream(), bGroup.stream())
+                .map(this::resolveNpcExpansionId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (expansionIds.size() > 1) {
+            throw new IllegalArgumentException(
+                    "Cannot share a loot tier across npcs from different expansions: " + expansionIds);
+        }
+    }
+
     // Transitive group merge, not a pairwise tag copy: if npcA and npcB are declared "same
     // tier" and either already belongs to a tier with other members, the whole group merges
     // into one. See conversation for the exact rules per case.
@@ -202,6 +258,14 @@ public class NpcService extends BaseServiceImpl<NpcEntity, NpcDTO> {
 
         Integer tierA = a.getRandomLootTier();
         Integer tierB = b.getRandomLootTier();
+
+        // Shared loot pools don't cross expansions in practice -- checked across every npc
+        // that would land in the merged group, not just a and b, so merging into an existing
+        // multi-member tier is validated against the whole group too.
+        List<NpcEntity> aGroup = tierA != null ? npcRepo.findByRandomLootTier(tierA) : List.of(a);
+        List<NpcEntity> bGroup = tierB != null ? npcRepo.findByRandomLootTier(tierB) : List.of(b);
+        requireCompatibleExpansions(aGroup, bGroup);
+
         Integer targetTier;
         if (tierA != null) {
             targetTier = tierA;
@@ -212,7 +276,6 @@ public class NpcService extends BaseServiceImpl<NpcEntity, NpcDTO> {
         }
 
         if (tierB != null && !tierB.equals(targetTier)) {
-            List<NpcEntity> bGroup = npcRepo.findByRandomLootTier(tierB);
             bGroup.forEach(npc -> npc.setRandomLootTier(targetTier));
             npcRepo.saveAll(bGroup);
         } else {
@@ -260,6 +323,42 @@ public class NpcService extends BaseServiceImpl<NpcEntity, NpcDTO> {
 
         if (npc.getDrops() != null) {
             npc.getDrops().removeIf(a -> a.getId().equals(armorId));
+            npc = npcRepo.save(npc);
+        }
+        return entityToDTO(npc);
+    }
+
+    @Transactional
+    public NpcDTO addItemDrop(Long npcId, Long itemId) {
+        return addItemDrops(npcId, List.of(itemId));
+    }
+
+    @Transactional
+    public NpcDTO addItemDrops(Long npcId, List<Long> itemIds) {
+        NpcEntity npc = npcRepo.findById(npcId)
+                .orElseThrow(() -> new IllegalArgumentException("Unknown npc id: " + npcId));
+        List<ItemEntity> itemsToAdd = resolveItemsByIds(itemIds);
+
+        if (npc.getItemDrops() == null) {
+            npc.setItemDrops(new HashSet<>());
+        }
+        Set<Long> existingIds = npc.getItemDrops().stream().map(ItemEntity::getId).collect(Collectors.toSet());
+        for (ItemEntity item : itemsToAdd) {
+            if (!existingIds.contains(item.getId())) {
+                npc.getItemDrops().add(item);
+            }
+        }
+        npc = npcRepo.save(npc);
+        return entityToDTO(npc);
+    }
+
+    @Transactional
+    public NpcDTO removeItemDrop(Long npcId, Long itemId) {
+        NpcEntity npc = npcRepo.findById(npcId)
+                .orElseThrow(() -> new IllegalArgumentException("Unknown npc id: " + npcId));
+
+        if (npc.getItemDrops() != null) {
+            npc.getItemDrops().removeIf(i -> i.getId().equals(itemId));
             npc = npcRepo.save(npc);
         }
         return entityToDTO(npc);

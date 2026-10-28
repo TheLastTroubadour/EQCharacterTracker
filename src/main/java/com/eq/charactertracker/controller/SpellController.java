@@ -2,8 +2,10 @@ package com.eq.charactertracker.controller;
 
 import com.eq.charactertracker.constants.CharacterClass;
 import com.eq.charactertracker.constants.ServerType;
+import com.eq.charactertracker.model.imports.SpellRuneImportResult;
 import com.eq.charactertracker.model.spell.SpellRequest;
 import com.eq.charactertracker.model.spell.SpellDTO;
+import com.eq.charactertracker.model.spell.SpellRuneImportRequest;
 import com.eq.charactertracker.service.SpellService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -34,6 +36,13 @@ public class SpellController {
         return spellService.importSpells(requests);
     }
 
+    @PostMapping("/import-runes")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasRole('ADMIN')")
+    public SpellRuneImportResult importRunes(@RequestBody SpellRuneImportRequest request) {
+        return spellService.importRunes(request);
+    }
+
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("hasRole('ADMIN')")
@@ -53,5 +62,12 @@ public class SpellController {
     @ResponseStatus(HttpStatus.OK)
     public SpellDTO getById(@PathVariable Long id) {
         return spellService.getById(id);
+    }
+
+    @GetMapping("/needs-review")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<SpellDTO> getSpellsNeedingReview() {
+        return spellService.getSpellsNeedingReview();
     }
 }

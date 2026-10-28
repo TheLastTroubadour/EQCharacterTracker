@@ -210,12 +210,15 @@ public class QuestProgressService {
     private List<QuestCompletionResponse> getQuestCompletionForCharacter(Long characterId) {
         return characterQuestProgressRepo.findByCharacter_Id(characterId).stream()
                 .map(progress -> {
+                    CharacterQuestProgressResponse full = toResponse(progress);
+
                     QuestCompletionResponse completion = new QuestCompletionResponse();
                     completion.setProgressId(progress.getId());
                     completion.setQuestTemplateId(progress.getQuestTemplate().getId());
                     completion.setQuestName(progress.getQuestTemplate().getName());
                     completion.setQuestType(progress.getQuestTemplate().getQuestType());
-                    completion.setCompleted(toResponse(progress).isCompleted());
+                    completion.setCompleted(full.isCompleted());
+                    completion.setSubQuests(full.getSubQuests());
                     return completion;
                 }).toList();
     }

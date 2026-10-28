@@ -121,13 +121,33 @@ public class ImportService {
             }
         }
 
-        if (request.getSpells() != null) {
+        // Disciplines live in the same catalog/progress tables as spells (see
+        // CharacterService.SpellUnlockType discussion) -- there's no separate "type" field, so
+        // they're processed through the exact same processSpell logic, just from a different
+        // section of the export. Reset once, before either list, so a discipline processed
+        // first doesn't get wiped out by a spells-triggered reset run afterward.
+        if (request.getSpells() != null || request.getDisciplines() != null) {
             characterSpellRepo.resetScribedForCharacter(character.getId());
+        }
+
+        if (request.getSpells() != null) {
             for (SpellImport spell : request.getSpells()) {
                 try {
-                    result.setSpellsImported(result.getSpellsImported() + processSpell(spell, character));
+                    result.setSpellsImported(result.getSpellsImported() + processSpell(spell, character, result));
                 } catch (IllegalArgumentException e) {
                     String msg = String.format("Skipped spell [%s]: %s", spell.getName(), e.getMessage());
+                    log.warn(msg);
+                    result.addSkipped(msg);
+                }
+            }
+        }
+
+        if (request.getDisciplines() != null) {
+            for (SpellImport discipline : request.getDisciplines()) {
+                try {
+                    result.setSpellsImported(result.getSpellsImported() + processSpell(discipline, character, result));
+                } catch (IllegalArgumentException e) {
+                    String msg = String.format("Skipped discipline [%s]: %s", discipline.getName(), e.getMessage());
                     log.warn(msg);
                     result.addSkipped(msg);
                 }
@@ -299,12 +319,13 @@ public class ImportService {
         characterInventoryRepo.save(inventory);
     }
 
-    // name/rankName carry the rank suffix when present (e.g. "Cloak of Corruption Rk. II"),
-    // not the catalog's base name -- strip it to get the lookup key and the max rank.
-    // Scribing rank 2 replaces rank 1 in the spellbook, rank 3 replaces rank 2 -- so
-    // having rank N scribed means every rank below N was scribed too, and we mark all
-    // of them.
-    private int processSpell(SpellImport spellImport, CharacterEntity character) {
+    // name/rankName carry the rank suffix when present (e.g. "Cloak of Corruption Rk. II").
+    // The export's suffix format varies ("Rk. II" / "Rk.II"); the catalog's is canonical
+    // "<base> Rk.II" / "<base> Rk.III" (rank 1 is the bare base name). Parse the base name +
+    // max rank off the export string, then rebuild the canonical per-rank name for the lookup.
+    // Scribing rank 2 replaces rank 1 in the spellbook, rank 3 replaces rank 2 -- so having
+    // rank N scribed means every rank below N was scribed too, and we mark all of them.
+    private int processSpell(SpellImport spellImport, CharacterEntity character, ImportResult result) {
         ServerType serverType = character.getServer().getType();
         String rankName = spellImport.getRankName() != null ? spellImport.getRankName() : spellImport.getName();
         rankName = normalizeSpellName(rankName);
@@ -319,12 +340,13 @@ public class ImportService {
 
         int marked = 0;
         for (short rank = 1; rank <= maxRank; rank++) {
+            String lookupName = catalogName(baseName, rank);
             short currentRank = rank;
-            String lookupName = baseName;
+            boolean isImportedRank = rank == maxRank;
             SpellEntity spellEntity = spellRepo
                     .findByNameAndRankAndCharacterClassAndServerType(lookupName, rank, character.getCharacterClass(), serverType)
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            "Spell not found in catalog: " + lookupName + " rank " + currentRank));
+                    .orElseGet(() -> createSpellFromImport(lookupName, currentRank, character.getCharacterClass(), serverType,
+                            spellImport, isImportedRank, result));
 
             CharacterSpellEntity progress = characterSpellRepo.findByCharacter_IdAndSpell_Id(character.getId(), spellEntity.getId())
                     .orElseGet(() -> {
@@ -340,10 +362,49 @@ public class ImportService {
         return marked;
     }
 
+    // Auto-creates a minimal catalog entry when the spellbook/discipline list references a
+    // spell not yet in the catalog, using only what the character export provides. The export
+    // only carries level/mana for the rank the character actually has scribed -- for a rank N
+    // spell that implies ranks 1..N-1 too (see processSpell), those lower ranks get created
+    // with placeholder level/mana rather than guessed values, since the export has no data for
+    // them. Either way, description/expansion/unlockType/rune data are never in the export, so
+    // every auto-created row is flagged in the result for a manual catalog pass.
+    private SpellEntity createSpellFromImport(String name, short rank, CharacterClass characterClass,
+                                               ServerType serverType, SpellImport spellImport,
+                                               boolean isImportedRank, ImportResult result) {
+        SpellEntity spell = new SpellEntity();
+        spell.setName(name);
+        spell.setRank(rank);
+        spell.setCharacterClass(characterClass);
+        spell.setServerType(serverType);
+        spell.setLevel(isImportedRank && spellImport.getLevel() != null ? spellImport.getLevel() : 0);
+        spell.setManaCost(isImportedRank ? spellImport.getMana() : null);
+        spell.setEnduranceCost(isImportedRank ? spellImport.getEnduranceCost() : null);
+        spell.setNeedsReview(true);
+        spell = spellRepo.save(spell);
+
+        result.addNeedsReview(String.format(
+                "Auto-created spell [%s] rank %d (%s, %s) from import -- needs manual review "
+                        + "(description/expansion/unlock data missing%s)",
+                name, rank, characterClass, serverType,
+                isImportedRank ? "" : "; level/mana are placeholders, not in the export for this lower rank"));
+        return spell;
+    }
+
     // Lucy_Data (the catalog source) never has colons in spell names, but the live-game
     // exporter does -- strip them so the catalog lookup still matches.
     private String normalizeSpellName(String name) {
         return name.replace(":", "").replaceAll(" {2,}", " ").trim();
+    }
+
+    // The catalog stores rank 1 under the bare base name and ranks 2/3 with a canonical
+    // " Rk.II" / " Rk.III" suffix -- see processSpell and the rank-suffix data migration.
+    private String catalogName(String baseName, short rank) {
+        return switch (rank) {
+            case 2 -> baseName + " Rk.II";
+            case 3 -> baseName + " Rk.III";
+            default -> baseName;
+        };
     }
 
     private int nvl(Integer value) {

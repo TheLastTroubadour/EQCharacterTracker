@@ -20,6 +20,10 @@ public interface NpcRepo extends BaseRepo<NpcEntity, Long> {
 
     List<NpcEntity> findByRandomLootTier(Integer randomLootTier);
 
+    // The raid-import review queue -- every npc created from a Raids / "Conqueror of"
+    // achievement row lands here until a human confirms or deletes it.
+    List<NpcEntity> findByNeedsReviewTrue();
+
     @Query("SELECT COALESCE(MAX(n.randomLootTier), 0) FROM NpcEntity n")
     Integer findMaxRandomLootTier();
 

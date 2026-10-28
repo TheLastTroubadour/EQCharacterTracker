@@ -1,5 +1,6 @@
 package com.eq.charactertracker.service;
 
+import com.eq.charactertracker.constants.NpcTier;
 import com.eq.charactertracker.constants.ServerType;
 import com.eq.charactertracker.entity.NpcEntity;
 import com.eq.charactertracker.entity.ZoneEntity;
@@ -23,25 +24,37 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-// Imports the Hunter/Hunts side of mq2-scripts/hunter_raid_extract.lua's output
-// (expansion|category|zoneAchievementName|description, pipe-delimited). Raids is
-// intentionally skipped -- its rollup achievements don't follow a name pattern
-// reliable enough to separate from real NPC data the way Hunter/Hunts does.
+// Imports mq2-scripts/hunter_raid_extract.lua's output
+// (expansion|category|zoneAchievementName|description, pipe-delimited).
 //
-// Each zone's Hunter/Hunts achievement tree mixes two kinds of rows: real NPC kills,
-// and region-rollup achievements whose "objectives" are just other achievement names
-// (e.g. "Hunter of Faydwer" listing "Hunter of Butcherblock Mountains" as an
-// objective, rather than an actual mob) -- confirmed empirically against a real
-// export. A description starting with "Hunter of " or "Hunts of " is always one of
-// those rollup references, never a real mob name, so it's filtered out rather than
-// imported as an NPC.
+// Hunter/Hunts rows are real per-zone NPC kills. Raids rows are only used when the
+// achievement name is "Conqueror of <zone>" -- the rest of that category (tradeskill
+// rollups, explorer/slayer meta-achievements, seasonal events) carries no reliable
+// target data. Even the "Conqueror of" rows are noisy: classic-era ones list clean
+// raid-boss names, but later expansions list encounter/event step names ("Complete
+// Phase 1", "The Roots of Evil") instead of mobs. So every npc created from a raid row
+// is tier RAID_NAMED with needsReview = true, for a human to confirm or delete -- see
+// NpcEntity.needsReview.
+//
+// Every zone achievement tree also mixes in region-rollup achievements whose
+// "objectives" are just other achievement names (e.g. "Hunter of Faydwer" listing
+// "Hunter of Butcherblock Mountains", or a "Conqueror of" listing another "Conqueror
+// of") rather than an actual mob -- confirmed empirically against a real export. A
+// description starting with "Hunter of ", "Hunts of ", or "Conqueror of " is always
+// one of those rollup references, never a real mob name, so it's filtered out rather
+// than imported as an NPC.
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class HunterImportService {
 
     private static final Set<String> HUNTER_CATEGORIES = Set.of("Hunter", "Hunts");
-    private static final String[] ZONE_ACHIEVEMENT_PREFIXES = {"Hunter of ", "Hunts of "};
+    private static final String RAIDS_CATEGORY = "Raids";
+    private static final String CONQUEROR_PREFIX = "Conqueror of ";
+    // Used both to derive a zone name from the achievement name (strip the prefix) and to
+    // recognise a rollup-reference description (a desc that starts with one of these points
+    // at another achievement, not a mob).
+    private static final String[] ZONE_ACHIEVEMENT_PREFIXES = {"Hunter of ", "Hunts of ", CONQUEROR_PREFIX};
 
     private final ZoneRepo zoneRepo;
     private final NpcRepo npcRepo;
@@ -70,8 +83,11 @@ public class HunterImportService {
             throw new RuntimeException("Unable to read hunter export file: " + filePath, e);
         }
 
-        log.info("Hunter import: {} rows, {} npc-zone links created, {} skipped (non-Hunter), {} skipped (empty desc), {} skipped (rollup ref)",
-                result.getTotalRows(), result.getNpcZoneLinksCreated(), result.getSkippedNonHunterCategory(),
+        log.info("Hunter import: {} rows, {} npc-zone links created ({} raid-named, flagged for review), "
+                        + "{} skipped (non-Hunter), {} skipped (non-Conqueror raid), {} skipped (empty desc), "
+                        + "{} skipped (rollup ref)",
+                result.getTotalRows(), result.getNpcZoneLinksCreated(), result.getRaidNamedCreated(),
+                result.getSkippedNonHunterCategory(), result.getSkippedNonConquerorRaid(),
                 result.getSkippedEmptyDescription(), result.getSkippedRollupReference());
         return result;
     }
@@ -87,8 +103,15 @@ public class HunterImportService {
         String zoneAchievementName = fields[2].trim();
         String description = fields[3].trim();
 
-        if (!HUNTER_CATEGORIES.contains(category)) {
+        boolean isRaid = RAIDS_CATEGORY.equals(category);
+        if (!isRaid && !HUNTER_CATEGORIES.contains(category)) {
             result.setSkippedNonHunterCategory(result.getSkippedNonHunterCategory() + 1);
+            return;
+        }
+        // In the Raids category, only "Conqueror of <zone>" achievements name kill targets;
+        // everything else there is a rollup/tradeskill/event with no usable data.
+        if (isRaid && !zoneAchievementName.startsWith(CONQUEROR_PREFIX)) {
+            result.setSkippedNonConquerorRaid(result.getSkippedNonConquerorRaid() + 1);
             return;
         }
         if (description.isEmpty() || description.equalsIgnoreCase("nil")) {
@@ -114,9 +137,15 @@ public class HunterImportService {
         String zoneCacheKey = expansionKey + "|" + zoneName.toLowerCase();
         ZoneEntity zone = zoneCache.computeIfAbsent(zoneCacheKey, k -> upsertZone(zoneName, expansion));
 
+        // Raid rows are all flagged for manual review (isRaid doubles as the needsReview
+        // flag) since the "Conqueror of" data mixes real mobs with encounter/event names.
+        NpcTier tier = isRaid ? NpcTier.RAID_NAMED : NpcTier.GROUP_NAMED;
         String npcZoneKey = zone.getId() + "|" + description.toLowerCase();
-        if (processedNpcZonePairs.add(npcZoneKey) && upsertNpcInZone(description, zone)) {
+        if (processedNpcZonePairs.add(npcZoneKey) && upsertNpcInZone(description, zone, tier, isRaid)) {
             result.setNpcZoneLinksCreated(result.getNpcZoneLinksCreated() + 1);
+            if (isRaid) {
+                result.setRaidNamedCreated(result.getRaidNamedCreated() + 1);
+            }
         }
     }
 
@@ -175,14 +204,17 @@ public class HunterImportService {
     }
 
     // Returns true if a new npc-in-this-zone record was created, false if one already
-    // existed (e.g. a re-run of an already-imported file).
-    private boolean upsertNpcInZone(String npcName, ZoneEntity zone) {
+    // existed (e.g. a re-run of an already-imported file). An existing npc is left as-is --
+    // its tier/needsReview aren't overwritten, so a re-run won't re-flag a curated raid npc.
+    private boolean upsertNpcInZone(String npcName, ZoneEntity zone, NpcTier tier, boolean needsReview) {
         Optional<NpcEntity> existing = npcRepo.findByNameIgnoreCaseAndZones_Id(npcName, zone.getId());
         if (existing.isPresent()) {
             return false;
         }
         NpcEntity npc = new NpcEntity();
         npc.setName(npcName);
+        npc.setTier(tier);
+        npc.setNeedsReview(needsReview);
         Set<ZoneEntity> zones = new HashSet<>();
         zones.add(zone);
         npc.setZones(zones);

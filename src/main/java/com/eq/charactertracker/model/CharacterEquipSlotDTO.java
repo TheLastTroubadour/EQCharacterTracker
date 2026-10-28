@@ -15,4 +15,5 @@ public class CharacterEquipSlotDTO {
     private ArmorDTO armor;
     private Augmentation aug1;
     private Augmentation aug2;
+    private Augmentation aug3;
 }

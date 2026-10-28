@@ -2,6 +2,7 @@ package com.eq.charactertracker.controller;
 
 import com.eq.charactertracker.constants.CharacterClass;
 import com.eq.charactertracker.constants.EquipSlotEnum;
+import com.eq.charactertracker.model.AugPresenceDTO;
 import com.eq.charactertracker.model.CharacterEquipSlotDTO;
 import com.eq.charactertracker.service.CharacterEquipSlotService;
 import lombok.RequiredArgsConstructor;
@@ -42,5 +43,13 @@ public class CharacterEquipSlotController {
     public List<CharacterEquipSlotDTO> getCharacterArmor(@PathVariable Long characterId,
                                                           @PathVariable String serverName) {
         return characterEquipSlotService.findCharacterEquipSlotEntitiesByCharacterIdAndCharacterServer(characterId, serverName);
+    }
+
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping("aug-search")
+    public AugPresenceDTO searchAugPresence(@RequestParam("name") String augName,
+                                             @RequestParam(value = "classes", required = false) List<CharacterClass> classes,
+                                             @RequestParam(value = "server", required = false) String server) {
+        return characterEquipSlotService.searchAugPresence(augName, classes, server);
     }
 }

@@ -13,8 +13,13 @@ public class ImportResult {
     private int inventoryImported;
     private int spellsImported;
     private List<String> skipped = new ArrayList<>();
+    private List<String> needsReview = new ArrayList<>();
 
     public void addSkipped(String message) {
         skipped.add(message);
+    }
+
+    public void addNeedsReview(String message) {
+        needsReview.add(message);
     }
 }

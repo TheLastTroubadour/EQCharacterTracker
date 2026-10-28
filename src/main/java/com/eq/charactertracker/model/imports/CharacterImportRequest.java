@@ -12,4 +12,8 @@ public class CharacterImportRequest {
     private List<InventoryItemImport> inventory;
     @JsonDeserialize(using = SpellImportListDeserializer.class)
     private List<SpellImport> spells;
+    // Reuses SpellImport (see ImportService.processSpell) -- disciplines share the same
+    // catalog/progress tables as spells, just a different section of the export.
+    @JsonDeserialize(using = SpellImportListDeserializer.class)
+    private List<SpellImport> disciplines;
 }

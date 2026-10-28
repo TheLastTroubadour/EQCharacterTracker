@@ -11,6 +11,9 @@ public class NpcDTO {
     private String name;
     private NpcTier tier;
     private Integer randomLootTier;
+    private boolean needsReview;
+    private boolean encounter;
     private Collection<ZoneDTO> zones;
     private Collection<ArmorDTO> drops;
+    private Collection<Item> itemDrops;
 }
